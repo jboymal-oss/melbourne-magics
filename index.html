@@ -65,8 +65,10 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .stars{position:relative;display:inline-block;color:var(--line);letter-spacing:1px;line-height:1}
 .stars span{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;color:var(--gold)}
 #mapWrap{flex:1;position:relative;min-width:0;background:var(--water)}
-#cv{position:absolute;inset:0;width:100%;height:100%}
-#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none}
+#cv{position:absolute;left:-50%;top:-50%;width:200%;height:200%;transform-origin:0 0;will-change:transform}
+#mapWrap{overflow:hidden}
+.grab{display:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;transform-origin:0 0;will-change:transform;touch-action:none;cursor:grab;user-select:none}
 #map:active{cursor:grabbing}
 #map.adding{cursor:crosshair}
 .pin{cursor:pointer}
@@ -156,13 +158,19 @@ label.fl{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
   .hbtns .btn{padding:7px 10px}
   .app{position:relative;display:block}
   #mapWrap{position:absolute;inset:0}
-  aside{position:absolute;left:0;right:0;bottom:0;height:72%;width:auto;border-right:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:var(--shadow);transform:translateY(105%);transition:transform .25s ease;z-index:6}
-  body.panel-open aside{transform:none}
-  aside::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0}
-  #toggle{display:block;position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:8;box-shadow:var(--shadow);padding:11px 22px;font-size:15px}
-  .legend{bottom:70px}
+  aside{position:absolute;left:0;right:0;bottom:0;height:84px;width:auto;border-right:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(60,35,15,.18);z-index:6;transition:height .32s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+  aside.drag{transition:none}
+  .grab{display:flex;flex-direction:column;align-items:center;gap:7px;padding:9px 16px 9px;touch-action:none;cursor:grab;flex-shrink:0;min-height:30px}
+  .grab i{width:44px;height:5px;border-radius:3px;background:var(--unrated);opacity:.55}
+  .grab b{font-size:14.5px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .grab b:empty{display:none}
+  .panel{padding-top:2px;overscroll-behavior:contain}
+  aside[data-s=half] .panel{overflow-y:hidden}
+  aside[data-s=peek] .panel{visibility:hidden}
+  #toggle{display:none!important}
+  .legend{bottom:96px}
   .attr{bottom:auto;top:6px;right:auto;left:8px}
-  body.panel-open .legend{display:none}
+  body.sheet-up .legend{display:none}
 }
 </style>
 </head>
@@ -184,7 +192,7 @@ label.fl{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
   </div>
 </header>
 <div class="app">
-  <aside><div class="panel" id="panel"></div></aside>
+  <aside id="side"><div class="grab" id="grab"><i></i><b id="grabText"></b></div><div class="panel" id="panel"></div></aside>
   <section id="mapWrap">
     <canvas id="cv"></canvas>
     <svg id="map" aria-label="Map of Melbourne cafes">
@@ -228,7 +236,7 @@ const REPORTS=["Closed down","Wrong location","Not a cafe"];
 
 /* ---------- State ---------- */
 const S={db:null,user:null,uid:null,mode:"connecting",isOwner:false,people:{},config:{hidden:[]},favs:[],names:{},
-  sel:null,list:null,limit:60,q:"",minR:0,suburb:"",sort:"top",favOnly:false,addMode:false,draft:null,panel:false,showReport:false,confirmRm:null,stale:false};
+  sel:null,list:null,limit:60,sheet:"peek",q:"",minR:0,suburb:"",sort:"top",favOnly:false,addMode:false,draft:null,panel:false,showReport:false,confirmRm:null,stale:false};
 let ST={}; // stats by cafe id
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -360,12 +368,13 @@ const ISPOLY=[0,1,0,0,0,0,1,1,1,0,0];
 const RW=[[0.42,1,12,0.9],null,[0.6,1.2,14,FARU],[0.75,1.3,15,3.2],[0.9,1.5,16,9],[1.15,1.8,18,99]];
 function drawBase(){
   const r=rect();if(!r.width)return;const dpr=Math.min(2,window.devicePixelRatio||1);
-  const W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
+  const V={x:vb.x-OS*vb.w,y:vb.y-OS*vb.h,w:vb.w*(1+2*OS),h:vb.h*(1+2*OS)},R={width:r.width*(1+2*OS),height:r.height*(1+2*OS)};
+  const W=Math.round(R.width*dpr),H=Math.round(R.height*dpr);
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
   if(!landPath)landPath=new Path2D(D.land||"");
-  const u=vb.w/r.width,k=dpr/u;
+  const u=V.w/R.width,k=dpr/u;
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=CSSV.water;ctx.fillRect(0,0,W,H);
-  ctx.setTransform(k,0,0,k,-vb.x*k,-vb.y*k);
+  ctx.setTransform(k,0,0,k,-V.x*k,-V.y*k);
   ctx.fillStyle=CSSV.land;ctx.fill(landPath);
   ctx.lineCap="round";ctx.lineJoin="round";
   ctx.save();ctx.globalAlpha=u>0.45?1:0.55;ctx.lineWidth=0.7*u;ctx.strokeStyle=CSSV.road;ctx.stroke(landPath);ctx.restore();
@@ -374,7 +383,7 @@ function drawBase(){
   const show=kd=>kd===1?u<0.9:kd<6?u<RW[kd][3]:kd===10?u<0.7:true;
   const {GRID,GC}=u>FARU&&FAR.ROADS.length?FAR:NEAR;
   if(u>0.6){ctx.lineCap="butt";ctx.lineJoin="bevel"}
-  for(let gx=Math.floor(vb.x/GC);gx<=Math.floor((vb.x+vb.w)/GC);gx++)for(let gy=Math.floor(vb.y/GC);gy<=Math.floor((vb.y+vb.h)/GC);gy++){
+  for(let gx=Math.floor(V.x/GC);gx<=Math.floor((V.x+V.w)/GC);gx++)for(let gy=Math.floor(V.y/GC);gy<=Math.floor((V.y+V.h)/GC);gy++){
     const c=GRID.get(gx*100000+gy);if(!c)continue;
     for(const o of c){if(o.stamp===stamp)continue;o.stamp=stamp;
       if(!show(o.k)||(ISPOLY[o.k]&&o.sz<4*u))continue;
@@ -402,8 +411,8 @@ function drawBase(){
     if(!o.name||placed.length>160)continue;
     if(o.k===6||o.k===7){
       if(u>0.5)continue;ctx.font="italic 500 10.5px Inter,system-ui,sans-serif";const tw=tw_("p",o.name);
-      if((o.x1-o.x0)/u<tw+14)continue;const sx=((o.x0+o.x1)/2-vb.x)/u,sy=((o.y0+o.y1)/2-vb.y)/u;
-      if(sx<0||sy<0||sx>r.width||sy>r.height||clash(sx,sy,tw,o.name,200))continue;
+      if((o.x1-o.x0)/u<tw+14)continue;const sx=((o.x0+o.x1)/2-V.x)/u,sy=((o.y0+o.y1)/2-V.y)/u;
+      if(sx<0||sy<0||sx>R.width||sy>R.height||clash(sx,sy,tw,o.name,200))continue;
       placed.push({n:o.name,x:sx,y:sy,w:tw});ctx.fillStyle=o.k===6?CSSV["park-ink"]:CSSV["water-ink"];ctx.fillText(o.name,sx,sy);continue;
     }
     if(o.k>5||o.k===1||u>LIM[o.k])continue;
@@ -416,11 +425,14 @@ function drawBase(){
     for(let i=2;i<pt.length;i+=2){const s=Math.hypot(pt[i]-pt[i-2],pt[i+1]-pt[i-1]);
       const on=pt[i]>vb.x&&pt[i]<vb.x+vb.w&&pt[i+1]>vb.y&&pt[i+1]<vb.y+vb.h;
       if(on){if(a0<0)a0=acc;a1=acc+s}acc+=s}
+    if(a0<0){acc=0;for(let i=2;i<pt.length;i+=2){const s=Math.hypot(pt[i]-pt[i-2],pt[i+1]-pt[i-1]);
+      const on=pt[i]>V.x&&pt[i]<V.x+V.w&&pt[i+1]>V.y&&pt[i+1]<V.y+V.h;
+      if(on){if(a0<0)a0=acc;a1=acc+s}acc+=s}}
     if(a0<0)continue;
     let half=(a0+a1)/2,sx=0,sy=0,ang=0,ok=false;
     for(let i=2;i<pt.length;i+=2){const dx=pt[i]-pt[i-2],dy=pt[i+1]-pt[i-1],s=Math.hypot(dx,dy);
-      if(half<=s&&s>0){const f=half/s;sx=(pt[i-2]+dx*f-vb.x)/u;sy=(pt[i-1]+dy*f-vb.y)/u;ang=Math.atan2(dy,dx);ok=true;break}half-=s}
-    if(!ok||sx<10||sy<10||sx>r.width-10||sy>r.height-10)continue;
+      if(half<=s&&s>0){const f=half/s;sx=(pt[i-2]+dx*f-V.x)/u;sy=(pt[i-1]+dy*f-V.y)/u;ang=Math.atan2(dy,dx);ok=true;break}half-=s}
+    if(!ok||sx<10||sy<10||sx>R.width-10||sy>R.height-10)continue;
     if(clash(sx,sy,tw,o.name,big?340:260))continue;
     placed.push({n:o.name,x:sx,y:sy,w:tw});
     if(ang>Math.PI/2)ang-=Math.PI;if(ang<-Math.PI/2)ang+=Math.PI;
@@ -435,13 +447,35 @@ const PAD=230,CX0=px(144.58),CX1=px(145.36),CY0=py(-37.52),CY1=py(-38.12);
 const BX0=CX0-PAD,BX1=CX1+PAD,BY0=CY0-PAD,BY1=CY1+PAD,MAXW=(BX1-BX0)*1.02;
 const HOME={cx:px(144.968),cy:py(-37.812),w:520};
 let vb={x:0,y:0,w:520,h:400};
-function rect(){return svg.getBoundingClientRect()}
-function setVB(){
-  const r=rect();if(!r.width)return;
+let OS=0.5;const wrap=$("#mapWrap");let drawn=null,commitT=0,lastCommit=0;
+function rect(){return wrap.getBoundingClientRect()}
+function clampVB(){
+  const r=rect();if(!r.width)return null;
   vb.w=Math.max(25,Math.min(MAXW,vb.w));vb.h=vb.w*r.height/r.width;
   if(vb.h>(BY1-BY0)*1.02){vb.h=(BY1-BY0)*1.02;vb.w=vb.h*r.width/r.height}
   vb.x=vb.w>=BX1-BX0?(BX0+BX1-vb.w)/2:Math.max(BX0,Math.min(BX1-vb.w,vb.x));vb.y=vb.h>=BY1-BY0?(BY0+BY1-vb.h)/2:Math.max(BY0,Math.min(BY1-vb.h,vb.y));
-  svg.setAttribute("viewBox",`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);drawBase();drawDynamic();updateScale();
+  return r;
+}
+// Full redraw of the map at the current view.
+function commit(){
+  clearTimeout(commitT);if(!clampVB())return;
+  // draw a margin around the screen so the map can slide before it needs redrawing (bigger on phones)
+  OS=isMobile()?0.5:0.25;cv.style.left=cv.style.top=-OS*100+"%";cv.style.width=cv.style.height=(1+2*OS)*100+"%";
+  svg.setAttribute("viewBox",`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);svg.style.transform="";cv.style.transform="";
+  drawBase();drawDynamic();updateScale();
+  drawn={x:vb.x,y:vb.y,w:vb.w,h:vb.h};lastCommit=performance.now();
+}
+// fast=true while a finger or the wheel is moving the map: slide and scale what is already
+// drawn (cheap), then redraw properly once movement pauses or the drawn area runs out.
+function setVB(fast){
+  if(!fast||!drawn)return commit();
+  const r=clampVB();if(!r)return;
+  const s=drawn.w/vb.w,tx=(drawn.x-vb.x)/vb.w*r.width,ty=(drawn.y-vb.y)/vb.h*r.height;
+  const out=vb.x<drawn.x-OS*drawn.w||vb.x+vb.w>drawn.x+drawn.w*(1+OS)||vb.y<drawn.y-OS*drawn.h||vb.y+vb.h>drawn.y+drawn.h*(1+OS)||s>2.6||s<0.5;
+  if(out&&performance.now()-lastCommit>120)return commit();
+  svg.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;
+  cv.style.transform=`translate(${tx+OS*r.width*(1-s)}px,${ty+OS*r.height*(1-s)}px) scale(${s})`;
+  clearTimeout(commitT);commitT=setTimeout(commit,170);
 }
 function updateScale(){
   const r=rect();if(!r.width)return;const u=vb.w/r.width;
@@ -449,41 +483,58 @@ function updateScale(){
   svg.querySelectorAll("[data-x]").forEach(g=>g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u})`));
 }
 function toWorld(cx,cy){const r=rect();return{x:vb.x+(cx-r.left)/r.width*vb.w,y:vb.y+(cy-r.top)/r.height*vb.h}}
-function zoomAt(cx,cy,f){
+function zoomAt(cx,cy,f,fast){
   const p=toWorld(cx,cy);const nw=Math.max(25,Math.min(MAXW,vb.w*f));const k=nw/vb.w;
-  vb.x=p.x-(p.x-vb.x)*k;vb.y=p.y-(p.y-vb.y)*k;vb.w=nw;setVB();
+  vb.x=p.x-(p.x-vb.x)*k;vb.y=p.y-(p.y-vb.y)*k;vb.w=nw;vb.h*=k;setVB(fast);
 }
 function zoomCentre(f){const r=rect();zoomAt(r.left+r.width/2,r.top+r.height/2,f)}
 function centreOn(x,y,w){
   const r=rect();if(w)vb.w=w;vb.h=vb.w*r.height/r.width;
-  vb.x=x-vb.w/2;vb.y=y-(isMobile()&&S.panel?vb.h*0.15:vb.h/2);setVB();
+  const f=isMobile()?Math.max(0.12,(1-sheetH(S.sheet)/r.height)/2):0.5;
+  vb.x=x-vb.w/2;vb.y=y-vb.h*f;setVB();
 }
 function goHome(){centreOn(HOME.cx,HOME.cy,isMobile()?320:HOME.w)}
-const ptrs=new Map();let down=null,moved=0;
+const ptrs=new Map();let down=null,moved=0,vel={x:0,y:0,t:0},glide=0;
 svg.addEventListener("pointerdown",e=>{
-  svg.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(ptrs.size===1){down={t:e.target};moved=0}else moved+=99;
+  cancelAnimationFrame(glide);
+  try{svg.setPointerCapture(e.pointerId)}catch(_){}
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){down={t:e.target};moved=0;vel={x:0,y:0,t:performance.now()}}else moved+=99;
 });
 svg.addEventListener("pointermove",e=>{
   if(!ptrs.has(e.pointerId))return;const r=rect();
   if(ptrs.size===1){const p=ptrs.get(e.pointerId);const dx=e.clientX-p.x,dy=e.clientY-p.y;
-    vb.x-=dx*vb.w/r.width;vb.y-=dy*vb.h/r.height;moved+=Math.abs(dx)+Math.abs(dy);
-    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});setVB();}
+    moved+=Math.abs(dx)+Math.abs(dy);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(moved<6)return;
+    const now=performance.now(),dt=Math.max(1,now-vel.t);vel={x:vel.x*0.5+dx/dt*0.5,y:vel.y*0.5+dy/dt*0.5,t:now};
+    vb.x-=dx*vb.w/r.width;vb.y-=dy*vb.h/r.height;setVB(true);}
   else if(ptrs.size===2){
     const [a,b]=[...ptrs.values()];const d0=Math.hypot(a.x-b.x,a.y-b.y),m0={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     const [c,d]=[...ptrs.values()];const d1=Math.hypot(c.x-d.x,c.y-d.y),m1={x:(c.x+d.x)/2,y:(c.y+d.y)/2};
     vb.x-=(m1.x-m0.x)*vb.w/r.width;vb.y-=(m1.y-m0.y)*vb.h/r.height;
-    if(d1>0)zoomAt(m1.x,m1.y,d0/d1);else setVB();
+    if(d1>0&&d0>0)zoomAt(m1.x,m1.y,d0/d1,true);else setVB(true);
   }
 });
 function endPtr(e){
-  if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);
-  if(ptrs.size===0){if(down&&moved<6)tapMap(down.t,e.clientX,e.clientY);down=null}
+  if(!ptrs.has(e.pointerId))return;const n=ptrs.size;ptrs.delete(e.pointerId);
+  if(ptrs.size!==0)return;
+  if(down&&moved<6){tapMap(down.t,e.clientX,e.clientY);down=null;return}
+  down=null;
+  // keep gliding for a moment after a flick
+  const sp=Math.hypot(vel.x,vel.y);
+  if(n===1&&performance.now()-vel.t<90&&sp>0.25){
+    let last=performance.now();
+    const step=now=>{const dt=Math.min(40,now-last);last=now;const r=rect();
+      vb.x-=vel.x*dt*vb.w/r.width;vb.y-=vel.y*dt*vb.h/r.height;
+      const k=Math.exp(-dt/300);vel.x*=k;vel.y*=k;setVB(true);
+      if(Math.hypot(vel.x,vel.y)>0.03)glide=requestAnimationFrame(step);else commit()};
+    glide=requestAnimationFrame(step);
+  }
 }
 svg.addEventListener("pointerup",endPtr);svg.addEventListener("pointercancel",endPtr);
-svg.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(e.deltaY*(e.ctrlKey?0.01:0.0018)))},{passive:false});
-new ResizeObserver(()=>setVB()).observe(svg);
+svg.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(e.deltaY*(e.ctrlKey?0.01:0.0018)),true)},{passive:false});
+new ResizeObserver(()=>{applySheet();commit()}).observe(wrap);
 function tapMap(t,cx,cy){
   const g=t&&t.closest&&t.closest(".pin");
   if(g&&!S.addMode){select(g.dataset.id,false);return}
@@ -517,8 +568,8 @@ function drawDynamic(){
   // suburb labels, busiest first, skipping overlaps
   const placed=[];let L="";
   for(const s of SUBL){
-    if(placed.length>=45)break;
-    if(s.x<vb.x||s.x>vb.x+vb.w||s.y<vb.y||s.y>vb.y+vb.h)continue;
+    if(placed.length>=90)break;
+    if(s.x<vb.x-OS*vb.w||s.x>vb.x+vb.w*(1+OS)||s.y<vb.y-OS*vb.h||s.y>vb.y+vb.h*(1+OS))continue;
     const w=(s.n.length*7.6+26)*u,hh=26*u;
     if(placed.some(q=>Math.abs(q.x-s.x)<(q.w+w)/2&&Math.abs(q.y-s.y)<hh))continue;
     placed.push({x:s.x,y:s.y,w});
@@ -526,7 +577,7 @@ function drawDynamic(){
   }
   $("#sublabels").innerHTML=L;
   // pins, grouped into clusters by screen grid
-  const cell=68*u,m=30*u,x0=vb.x-m,x1=vb.x+vb.w+m,y0=vb.y-m,y1=vb.y+vb.h+m,groups=new Map();
+  const cell=68*u,x0=vb.x-OS*vb.w,x1=vb.x+vb.w*(1+OS),y0=vb.y-OS*vb.h,y1=vb.y+vb.h*(1+OS),groups=new Map();
   for(const c of S.list){
     if(c.x<x0||c.x>x1||c.y<y0||c.y>y1||c.id===S.sel)continue;
     const k=Math.floor(c.x/cell)+"_"+Math.floor(c.y/cell);let g=groups.get(k);if(!g)groups.set(k,g=[]);g.push(c);
@@ -633,14 +684,57 @@ function renderAll(){
   if(S.sel&&!cafeById(S.sel))S.sel=null;
   S.sel?renderDetail():renderList(list);
   dynKey="";drawDynamic();updateScale();
-  document.body.classList.toggle("panel-open",S.panel);
-  $("#toggle").textContent=S.panel?"Map":"List";
+  applySheet();
   $("#addhint").hidden=!S.addMode;svg.classList.toggle("adding",S.addMode);
 }
+/* ---------- Phone: draggable bottom sheet (peek / half / full) ---------- */
+const side=$("#side"),ORDER=["peek","half","full"];let sd=null,dragEnd=0;
+function sheetH(s){const H=$(".app").clientHeight||600;return s==="peek"?84:s==="half"?Math.round(H*0.5):H-8}
+function applySheet(){
+  if(!isMobile()){side.style.height="";side.dataset.s="full";document.body.classList.remove("sheet-up");return}
+  side.dataset.s=S.sheet;if(!sd)side.style.height=sheetH(S.sheet)+"px";
+  document.body.classList.toggle("sheet-up",S.sheet!=="peek");
+  const c=S.sel&&cafeById(S.sel);
+  $("#grabText").textContent=S.sheet!=="peek"?"":c?c.n:S.list?`${S.list.length.toLocaleString()} cafe${S.list.length===1?"":"s"} · pull up for the list`:"";
+}
+function sheetStart(y){sd={y,h:side.getBoundingClientRect().height,ly:y,lt:performance.now(),v:0,moved:false}}
+function sheetMove(y){
+  if(!sd)return;
+  if(!sd.moved){if(Math.abs(y-sd.y)<6)return;sd.moved=true;side.classList.add("drag");side.dataset.s="full"}
+  const H=$(".app").clientHeight,h=Math.max(64,Math.min(H-8,sd.h+(sd.y-y)));side.style.height=h+"px";
+  const now=performance.now();sd.v=sd.v*0.4+((sd.ly-y)/Math.max(1,now-sd.lt))*0.6;sd.ly=y;sd.lt=now;
+}
+function sheetEnd(){
+  if(!sd)return false;const was=sd;sd=null;side.classList.remove("drag");
+  if(!was.moved)return false;
+  const h=side.getBoundingClientRect().height;let t;
+  if(Math.abs(was.v)>0.45){const near=ORDER.reduce((a,b)=>Math.abs(sheetH(b)-was.h)<Math.abs(sheetH(a)-was.h)?b:a);t=ORDER[Math.max(0,Math.min(2,ORDER.indexOf(near)+(was.v>0?1:-1)))]}
+  else t=ORDER.reduce((a,b)=>Math.abs(sheetH(b)-h)<Math.abs(sheetH(a)-h)?b:a);
+  S.sheet=t;dragEnd=performance.now();applySheet();return true;
+}
+(function(){
+  const g=$("#grab");
+  g.addEventListener("pointerdown",e=>{if(!isMobile())return;try{g.setPointerCapture(e.pointerId)}catch(_){}sheetStart(e.clientY)});
+  g.addEventListener("pointermove",e=>sheetMove(e.clientY));
+  const up=()=>{if(!sd)return;if(!sheetEnd()){S.sheet=S.sheet==="peek"?"half":S.sheet==="half"?"full":"half";applySheet()}};
+  g.addEventListener("pointerup",up);g.addEventListener("pointercancel",()=>{sheetEnd()});
+  // dragging the list itself: in the half position any drag moves the sheet;
+  // when fully open, pulling down from the top of the list lowers it.
+  const p=$("#panel");let ty=0,st=0,mode=0;
+  p.addEventListener("touchstart",e=>{if(!isMobile()||e.touches.length!==1)return;ty=e.touches[0].clientY;st=p.scrollTop;mode=0},{passive:true});
+  p.addEventListener("touchmove",e=>{
+    if(!isMobile()||mode===2)return;const y=e.touches[0].clientY,dy=y-ty;
+    if(mode===0){if(Math.abs(dy)<8)return;
+      if(S.sheet==="half"||(S.sheet==="full"&&st<=0&&dy>0)){mode=1;sheetStart(ty)}else{mode=2;return}}
+    if(e.cancelable)e.preventDefault();sheetMove(y);
+  },{passive:false});
+  const tend=()=>{if(mode===1)sheetEnd();mode=0};
+  p.addEventListener("touchend",tend);p.addEventListener("touchcancel",tend);
+})();
 let raf=0;function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(renderAll)}
 
 function select(id,fromList){
-  S.sel=id;S.showReport=false;S.confirmRm=null;S.panel=true;renderAll();
+  S.sel=id;S.showReport=false;S.confirmRm=null;if(S.sheet==="peek")S.sheet="half";renderAll();
   const c=cafeById(id);if(!c)return;
   const x=px(c.lng),y=py(c.lat);
   const inView=x>vb.x+vb.w*0.1&&x<vb.x+vb.w*0.9&&y>vb.y+vb.h*0.1&&y<vb.y+vb.h*(isMobile()?0.3:0.9);
@@ -783,6 +877,7 @@ function openAdd(){
 /* ---------- Events ---------- */
 document.addEventListener("click",async e=>{
   if(e.target.closest("#modal"))return;
+  if(performance.now()-dragEnd<350&&e.target.closest("#side"))return;
   const b=e.target.closest("[data-act]");if(!b)return;
   const act=b.dataset.act,id=b.dataset.id;
   if(act==="fav"){e.stopPropagation();return toggleFav(id)}
@@ -794,12 +889,12 @@ document.addEventListener("click",async e=>{
   if(act==="leader")return openLeader();
   if(act==="mine")return openMine();
   if(act==="signin")return openSignin();
-  if(act==="add"){if(!canRate()&&S.backend==="supabase"&&!S.uid)return openSignin();if(!canRate())return toast(S.mode==="connecting"?"Still loading, try again in a moment.":"You need permission to add cafes.");S.addMode=true;if(isMobile())S.panel=false;return render()}
+  if(act==="add"){if(!canRate()&&S.backend==="supabase"&&!S.uid)return openSignin();if(!canRate())return toast(S.mode==="connecting"?"Still loading, try again in a moment.":"You need permission to add cafes.");S.addMode=true;S.sheet="peek";return render()}
   if(act==="addcancel"){S.addMode=false;S.draft=null;drawDraft();return render()}
   if(act==="zin")return zoomCentre(0.7);
   if(act==="zout")return zoomCentre(1.4);
   if(act==="zreset")return goHome();
-  if(act==="toggle"){S.panel=!S.panel;if(S.panel)S.sel=null;return render()}
+  if(act==="toggle"){S.sheet=S.sheet==="peek"?"half":"peek";return render()}
   if(act==="photo"){const src=b.dataset.src;if(/^(\/_blob\/|data:image\/)/.test(src)||(S.photoBase&&src.startsWith(S.photoBase)))openModal(`<img src="${esc(src)}" alt="Magic photo" style="width:100%;border-radius:12px;display:block"><div class="row"><button class="btn" data-act="close">Close</button></div>`);return}
   if(act==="showreport"){S.showReport=true;return render()}
   if(act==="report"){const why=b.dataset.why;S.showReport=false;const ok=await saveMine(cur=>{cur.reports={...(cur.reports||{}),[id]:why}});if(ok)toast("Thanks, reported.");return}
@@ -815,7 +910,7 @@ $("#panel").addEventListener("change",e=>{
   if(e.target.id==="fFav")S.favOnly=e.target.checked;
   render();
 });
-$("#q").addEventListener("input",e=>{S.q=e.target.value;S.sel=null;S.limit=60;if(isMobile()&&S.q)S.panel=true;render()});
+$("#q").addEventListener("input",e=>{S.q=e.target.value;S.sel=null;S.limit=60;if(isMobile()&&S.q)S.sheet="full";render()});
 
 /* ---------- Boot ---------- */
 buildBase();setVB();goHome();renderAll();
