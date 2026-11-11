@@ -5,6 +5,6 @@
 // The publishable key starts with sb_publishable_ and is safe to make public.
 // Never put a secret key (sb_secret_...) in this file.
 window.MM_CONFIG = {
-  supabaseUrl: "",
-  supabaseKey: ""
+  supabaseUrl: "https://rahqxwktpvqhhyaktkdh.supabase.co",
+  supabaseKey: "sb_publishable_JBlfRIMr5DmJ0qlAPi0aMw_rmYDYJay"
 };
