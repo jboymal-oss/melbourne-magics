@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Melbourne Magics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6efe4;--card:#fffaf2;--ink:#2a1c12;--muted:#7a6656;--line:#e5d6c1;
+  --accent:#a0521d;--accent2:#c98a4b;--gold:#d4a017;--unrated:#a89888;
+  --cafe-ink:#7a3410;--street-ink:#9a8b7c;--street:#fffdf8;--main:#fbe7b0;--mway:#f4c27a;--park-ink:#5f7d47;--land:#f1e7d6;--water:#c9dfe6;--water-ink:#7aa7b7;--park:#d9e5c6;--road:#dccbb0;--cbd:#eadbc4;
+  --shadow:0 6px 24px rgba(60,35,15,.14);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#17110c;--card:#221a13;--ink:#f3e8da;--muted:#b09c8a;--line:#3a2d22;
+  --accent:#e08a4a;--accent2:#c98a4b;--unrated:#6e6156;
+  --cafe-ink:#ffc58f;--street-ink:#8f7f70;--street:#3b2e22;--main:#5e4a2c;--mway:#8a5a2b;--park-ink:#7d9a66;--land:#211912;--water:#1d3038;--water-ink:#3f6676;--park:#24301d;--road:#3a2d20;--cbd:#2c2117;
+  --shadow:0 6px 24px rgba(0,0,0,.5);
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+a.btn{color:inherit}
+html,body{margin:0;height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;height:100dvh;overflow:hidden;font-size:15px}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent2);outline-offset:0}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap;z-index:10}
+.logo{display:flex;align-items:center;gap:8px;font-family:Fraunces,serif;font-weight:800;font-size:22px;letter-spacing:-.3px;white-space:nowrap}
+.logo span{color:var(--accent)}
+.search{flex:1;min-width:200px;max-width:420px;position:relative}
+.search input{padding-left:34px;border-radius:999px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5}
+.hbtns{display:flex;gap:6px;margin-left:auto;overflow-x:auto}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--accent2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:5px 11px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.app{flex:1;display:flex;min-height:0}
+aside{width:390px;flex-shrink:0;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;min-height:0}
+.panel{overflow-y:auto;flex:1;padding:14px 16px 90px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.filters select{padding:7px 9px;font-size:13.5px}
+.chk{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--muted);grid-column:span 2}
+.chk input{width:auto}
+.note{font-size:13px;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-bottom:10px}
+.motw{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#a0521d,#d4a017);color:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;cursor:pointer;border:0;width:100%;text-align:left}
+.motw small{opacity:.85;font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.motw b{font-family:Fraunces,serif;font-size:18px;display:block}
+.motw .big{margin-left:auto;font-family:Fraunces,serif;font-size:26px;font-weight:800}
+.count{font-size:12.5px;color:var(--muted);margin:4px 2px 8px}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;width:100%;text-align:left}
+.item:hover{border-color:var(--accent2)}
+.item .nm{font-weight:600}
+.item .sb{font-size:12.5px;color:var(--muted)}
+.badge{min-width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+.badge.lg{min-width:64px;height:64px;font-size:22px;font-family:Fraunces,serif}
+.fav{margin-left:auto;background:none;border:0;font-size:20px;color:var(--unrated);padding:4px}
+.fav.on{color:var(--gold)}
+.stars{position:relative;display:inline-block;color:var(--line);letter-spacing:1px;line-height:1}
+.stars span{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;color:var(--gold)}
+#mapWrap{flex:1;position:relative;min-width:0;background:var(--water)}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none}
+#map:active{cursor:grabbing}
+#map.adding{cursor:crosshair}
+.pin{cursor:pointer}
+.pin-name{display:none;font-family:Inter,system-ui,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:-.1px;paint-order:stroke;stroke:var(--card);stroke-width:3.5px;stroke-linejoin:round;fill:var(--cafe-ink)}
+#map.zoomed .pin-name.show{display:block}
+.sub-label{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;fill:var(--muted);opacity:.75;pointer-events:none}
+.park-label{font-size:10px;font-style:italic;fill:#6c8a52;pointer-events:none}
+.sub-label{paint-order:stroke;stroke:var(--land);stroke-width:3px}
+.zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:20px;font-weight:600;box-shadow:var(--shadow)}
+.legend{position:absolute;left:14px;bottom:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:12px;box-shadow:var(--shadow);display:flex;gap:10px;flex-wrap:wrap;max-width:calc(100% - 28px)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.attr{position:absolute;right:8px;bottom:6px;font-size:10.5px;color:var(--muted);background:var(--card);padding:2px 7px;border-radius:6px;opacity:.9}
+.attr a{color:inherit}
+.addhint{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:999px;font-size:14px;font-weight:600;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow)}
+.addhint button{background:none;border:1px solid currentColor;border-radius:999px;padding:3px 10px;font-size:12.5px;color:inherit}
+/* detail */
+.back{background:none;border:0;color:var(--accent);font-weight:600;padding:0;margin-bottom:10px}
+.dh{display:flex;gap:10px;align-items:flex-start}
+.dh h2{font-family:Fraunces,serif;font-size:25px;margin:0;line-height:1.15}
+.dh .sb{color:var(--muted);font-size:13.5px;margin-top:3px}
+.scorebox{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0}
+.scorebox .meta{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.actions a.btn{text-decoration:none}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:18px 0 8px}
+.bar{display:grid;grid-template-columns:105px 1fr 30px;align-items:center;gap:8px;font-size:13.5px;margin:5px 0}
+.bar .tr{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar .tr div{height:100%;background:var(--accent2);border-radius:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 11px;font-size:13px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+button.chip:hover{border-color:var(--accent2)}
+.rev{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.rev .top{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.rev .who{font-weight:600}
+.rev .when{color:var(--muted);font-size:12px;margin-left:auto}
+.rev p{margin:6px 0 0;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.rev .tg{font-size:12px;color:var(--muted);margin-top:5px}
+.photos{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.photos img{width:86px;height:86px;object-fit:cover;border-radius:10px;cursor:pointer;flex-shrink:0}
+.rev img.rp{width:100%;max-height:190px;object-fit:cover;border-radius:8px;margin-top:8px;cursor:pointer;display:block}
+.phprev{display:flex;align-items:center;gap:10px}
+.phprev img{width:96px;height:96px;object-fit:cover;border-radius:10px}
+.phbtn{display:inline-block;cursor:pointer}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:12.5px;text-decoration:underline;padding:0}
+.muted{color:var(--muted);font-size:13.5px}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(20,12,6,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal[hidden]{display:none}
+.sheet{background:var(--bg);border-radius:18px;max-width:520px;width:100%;max-height:90dvh;overflow-y:auto;padding:20px 20px 18px;box-shadow:var(--shadow)}
+.sheet h2{font-family:Fraunces,serif;margin:0 0 4px;font-size:24px}
+.sheet .sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+.bigstars{display:flex;gap:4px}
+.bigstars button{background:none;border:0;font-size:38px;line-height:1;color:var(--line);padding:0 2px}
+.bigstars button.on{color:var(--gold)}
+.crit{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:8px;margin:6px 0;font-size:14px}
+.dots{display:flex;gap:5px}
+.dots button{width:32px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600}
+.dots button.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.row .left{margin-right:auto}
+label.fl{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
+.lb{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.lb .rk{width:22px;color:var(--muted);font-weight:700}
+.lb .v{margin-left:auto;font-weight:600}
+.lbtn{background:none;border:0;padding:0;text-align:left;font-weight:600}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.bdg{border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;background:var(--card)}
+.bdg b{display:block;font-size:14px}
+.bdg.off{opacity:.45}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.stats3 div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:12px;color:var(--muted)}
+.stats3 b{display:block;font-family:Fraunces,serif;font-size:24px;color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:.2s;z-index:60;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
+#toggle{display:none}
+.show-m{display:none}
+@media (max-width:820px){
+  header{padding:8px 12px;gap:8px}
+  .logo{font-size:19px}
+  .search{order:3;flex-basis:100%;max-width:none}
+  .hbtns{margin-left:auto}
+  .btn{padding:7px 11px;font-size:13px}
+  .hide-m{display:none}
+  .show-m{display:inline}
+  .hbtns .btn{padding:7px 10px}
+  .app{position:relative;display:block}
+  #mapWrap{position:absolute;inset:0}
+  aside{position:absolute;left:0;right:0;bottom:0;height:72%;width:auto;border-right:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:var(--shadow);transform:translateY(105%);transition:transform .25s ease;z-index:6}
+  body.panel-open aside{transform:none}
+  aside::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0}
+  #toggle{display:block;position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:8;box-shadow:var(--shadow);padding:11px 22px;font-size:15px}
+  .legend{bottom:70px}
+  .attr{bottom:auto;top:6px;right:auto;left:8px}
+  body.panel-open .legend{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 11h17v8a7 7 0 0 1-7 7h-3a7 7 0 0 1-7-7z" fill="#a0521d"/><path d="M23 13h2.5a3.5 3.5 0 0 1 0 7H23" fill="none" stroke="#a0521d" stroke-width="2.4"/><ellipse cx="14.5" cy="11" rx="8.5" ry="2.2" fill="#f3d9b5"/><path d="M11 3c1.5 2-1 3 .5 5M16 2c1.5 2-1 3.5.5 6" stroke="#c98a4b" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+    Melbourne <span>Magics</span>
+  </div>
+  <div class="search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input id="q" type="search" placeholder="Search cafes, suburbs or streets" autocomplete="off">
+  </div>
+  <div class="hbtns">
+    <button class="btn" data-act="explain"><span class="hide-m">What's a Magic?</span><span class="show-m">?</span></button>
+    <button class="btn" data-act="leader"><span class="hide-m">Leaderboard</span><span class="show-m">Top</span></button>
+    <button class="btn" data-act="mine"><span class="hide-m">My Magics</span><span class="show-m">Mine</span></button>
+    <button class="btn primary" data-act="add">+ <span class="hide-m">Add cafe</span><span class="show-m">Add</span></button>
+  </div>
+</header>
+<div class="app">
+  <aside><div class="panel" id="panel"></div></aside>
+  <section id="mapWrap">
+    <canvas id="cv"></canvas>
+    <svg id="map" aria-label="Map of Melbourne cafes">
+      <g id="labels"></g><g id="sublabels"></g><g id="pins"></g><g id="draft"></g>
+    </svg>
+    <div class="zoom">
+      <button data-act="zin" aria-label="Zoom in">+</button>
+      <button data-act="zout" aria-label="Zoom out">−</button>
+      <button data-act="zreset" aria-label="Reset view" style="font-size:15px">⌂</button>
+    </div>
+    <div class="legend">
+      <span><i style="background:#d4a017"></i>4.5+</span>
+      <span><i style="background:#a0521d"></i>4–4.5</span>
+      <span><i style="background:#c98a4b"></i>3–4</span>
+      <span><i style="background:#b9a48c"></i>under 3</span>
+      <span><i style="background:var(--card);box-shadow:inset 0 0 0 2.5px var(--accent)"></i>unrated</span>
+    </div>
+    <div class="attr">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Suburbs: data.gov.au</div>
+    <div id="addhint" class="addhint" hidden>Tap the map where the cafe is <button data-act="addcancel">Cancel</button></div>
+  </section>
+</div>
+<button id="toggle" class="btn primary" data-act="toggle">List</button>
+<div id="modal" class="modal" hidden><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script src="data.js"></script>
+<script src="streets.js"></script>
+<script>
+/* ---------- Seed data: well-known Melbourne cafes (approximate locations) ---------- */
+const LNG0=144.86,LAT0=-37.75,KY=5745,KX=KY*Math.cos(37.8*Math.PI/180);
+const px=lng=>(lng-LNG0)*KX, py=lat=>(LAT0-lat)*KY;
+const D=window.MM_DATA||{subs:[],cafes:[],land:""};
+const SEED=D.cafes.map(([id,n,si,a,lat,lng,h,w])=>({id,n,s:(D.subs[si]||["Melbourne"])[0],a,lat,lng,h,w,x:px(lng),y:py(lat),seed:true}));
+const SUBL=D.subs.map(([n,x,y,cnt,area])=>({n,x,y,cnt,area})).filter(s=>s.x>px(144.58)&&s.x<px(145.36)&&s.y>py(-37.52)&&s.y<py(-38.12)).sort((a,b)=>b.cnt-a.cnt||b.area-a.area);
+
+const CRIT=[["ristretto","Ristretto"],["milk","Milk texture"],["ratio","Ratio"],["temp","Temperature"],["art","Latte art"],["value","Value"]];
+const TAGS=["Perfect ratio","Silky milk","Sweet & balanced","Strong","Too milky","Too hot","Burnt","Bitter","Served in a glass","Great art","Fast service","Good value"];
+const MILKS=["Full cream","Skim","Oat","Almond","Soy","Lactose free"];
+const REPORTS=["Closed down","Wrong location","Not a cafe"];
+
+/* ---------- State ---------- */
+const S={db:null,user:null,uid:null,mode:"connecting",isOwner:false,people:{},config:{hidden:[]},favs:[],names:{},
+  sel:null,list:null,limit:60,q:"",minR:0,suburb:"",sort:"top",favOnly:false,addMode:false,draft:null,panel:false,showReport:false,confirmRm:null,stale:false};
+let ST={}; // stats by cafe id
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=(v,lo,hi)=>{v=Number(v);return Number.isFinite(v)&&v>=lo&&v<=hi?v:null};
+const isMobile=()=>matchMedia("(max-width:820px)").matches;
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),2600)}
+function colour(a){if(a==null)return"var(--unrated)";if(a>=4.5)return"#d4a017";if(a>=4)return"#a0521d";if(a>=3)return"#c98a4b";return"#b9a48c"}
+function stars(v,size=15){const p=Math.max(0,Math.min(100,(v||0)/5*100));return`<span class="stars" style="font-size:${size}px">★★★★★<span style="width:${p}%">★★★★★</span></span>`}
+function ago(t){const d=(Date.now()-t)/864e5;if(d<1)return"today";if(d<2)return"yesterday";if(d<30)return Math.floor(d)+" days ago";return new Date(t).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}
+function who(id){return id===S.uid?"You":(S.names[id]||"Someone")}
+const okPhoto=v=>typeof v==="string"&&(/^[\w.\-:~]{4,200}$/.test(v)||(S.mode==="local"&&v.startsWith("data:image/")));
+const photoSrc=v=>v.startsWith("data:image/")?v:"/_blob/"+encodeURIComponent(v);
+const canRate=()=>S.mode==="live"||S.mode==="local";
+
+/* ---------- Data ---------- */
+let CACHE=null;
+function rebuild(){
+  const out=SEED.slice();
+  for(const [uid,p] of Object.entries(S.people)){
+    const cs=p&&typeof p.cafes==="object"?p.cafes:{};
+    for(const [id,c] of Object.entries(cs)){
+      if(!c||typeof c.n!=="string")continue;
+      const lat=num(c.lat,-38.12,-37.52),lng=num(c.lng,144.58,145.36);
+      if(lat==null||lng==null)continue;
+      out.push({id,n:c.n.slice(0,60),s:String(c.s||"").slice(0,40)||"Melbourne",a:String(c.a||"").slice(0,80),lat,lng,x:px(lng),y:py(lat),by:uid});
+    }
+  }
+  const hidden=new Set(Array.isArray(S.config.hidden)?S.config.hidden:[]);
+  CACHE={all:out,vis:out.filter(c=>!hidden.has(c.id)),map:new Map(out.map(c=>[c.id,c]))};
+}
+function allCafes(includeHidden){if(!CACHE)rebuild();return includeHidden?CACHE.all:CACHE.vis}
+const cafeById=id=>{if(!CACHE)rebuild();return CACHE.map.get(id)};
+function computeStats(){
+  ST={};const wk=Date.now()-7*864e5;
+  const get=id=>ST[id]||(ST[id]={n:0,sum:0,crit:{},tags:{},prices:[],reviews:[],photos:[],wkN:0,wkSum:0,reports:{}});
+  for(const [uid,p] of Object.entries(S.people)){
+    if(!p||typeof p!=="object")continue;
+    for(const [cid,r] of Object.entries(p.reviews||{})){
+      const o=num(r&&r.o,1,5);if(o==null)continue;
+      const s=get(cid);s.n++;s.sum+=o;
+      const t=num(r.t,0,1e14)||0;if(t>wk){s.wkN++;s.wkSum+=o}
+      for(const [k] of CRIT){const v=num(r.d&&r.d[k],1,5);if(v!=null){(s.crit[k]=s.crit[k]||[0,0]);s.crit[k][0]+=v;s.crit[k][1]++}}
+      const tags=Array.isArray(r.tags)?r.tags.filter(x=>TAGS.includes(x)):[];
+      tags.forEach(x=>s.tags[x]=(s.tags[x]||0)+1);
+      const pr=num(r.price,1,20);if(pr!=null)s.prices.push(pr);
+      const ph=okPhoto(r.ph)?r.ph:"";if(ph)s.photos.push(ph);
+      s.reviews.push({uid,o,t,ph,milk:MILKS.includes(r.milk)?r.milk:"",price:pr,text:typeof r.text==="string"?r.text.slice(0,280):""});
+    }
+    for(const [cid,why] of Object.entries(p.reports||{})){if(REPORTS.includes(why)){const s=get(cid);s.reports[why]=(s.reports[why]||0)+1}}
+  }
+  for(const s of Object.values(ST)){s.avg=s.n?s.sum/s.n:null;s.reviews.sort((a,b)=>b.t-a.t);
+    if(s.prices.length){const a=s.prices.slice().sort((x,y)=>x-y);s.price=a[Math.floor(a.length/2)]}}
+}
+const avgOf=id=>ST[id]&&ST[id].n?ST[id].avg:null;
+
+function filtered(){
+  const q=S.q.trim().toLowerCase();
+  let list=allCafes().filter(c=>{
+    if(q&&!(c.n+" "+c.s+" "+c.a).toLowerCase().includes(q))return false;
+    if(S.suburb&&c.s!==S.suburb)return false;
+    if(S.favOnly&&!S.favs.includes(c.id))return false;
+    if(S.minR){const a=avgOf(c.id);if(a==null||a<S.minR)return false}
+    return true;
+  });
+  const n=id=>ST[id]?ST[id].n:0;
+  if(S.sort==="top")list.sort((a,b)=>(avgOf(b.id)??-1)-(avgOf(a.id)??-1)||n(b.id)-n(a.id)||a.n.localeCompare(b.n));
+  if(S.sort==="most")list.sort((a,b)=>n(b.id)-n(a.id)||a.n.localeCompare(b.n));
+  if(S.sort==="az")list.sort((a,b)=>a.n.localeCompare(b.n));
+  if(S.sort==="near"){const cx=vb.x+vb.w/2,cy=vb.y+vb.h/2,d=c=>(c.x-cx)**2+(c.y-cy)**2;list.sort((a,b)=>d(a)-d(b))}
+  if(S.sort==="new")list.sort((a,b)=>((ST[b.id]?.reviews[0]?.t)||0)-((ST[a.id]?.reviews[0]?.t)||0));
+  return list;
+}
+
+/* ---------- Saving ---------- */
+let chain=Promise.resolve();
+function handleErr(e){
+  const c=e&&e.code;
+  if(c==="invalid_argument"){S.mode="readonly";render();toast("You can't save here yet. Ask the owner for Contributor access.")}
+  else if(c==="quota_exceeded")toast("Storage is full. Ask the owner to tidy up old data.");
+  else toast("Couldn't save. Check your connection and try again.");
+}
+function writeDoc(uid,data){
+  S.people[uid]=data;CACHE=null;render();
+  if(!S.db)return Promise.resolve(true);
+  chain=chain.then(()=>S.db.doc("people/"+uid).set(data)).then(()=>true,e=>{handleErr(e);return false});
+  return chain;
+}
+function saveMine(mut){const cur=structuredClone(S.people[S.uid]||{});mut(cur);return writeDoc(S.uid,cur)}
+function saveOther(uid,mut){const cur=structuredClone(S.people[uid]||{});mut(cur);return writeDoc(uid,cur)}
+async function toggleFav(id){
+  const f=S.favs.includes(id)?S.favs.filter(x=>x!==id):[...S.favs,id];S.favs=f;render();
+  if(S.db&&S.uid){try{await S.db.doc("data/users/"+S.uid+"/prefs").set({favs:f})}catch(e){toast("Couldn't save favourite.")}}
+}
+async function setHidden(id,hide){
+  const h=new Set(Array.isArray(S.config.hidden)?S.config.hidden:[]);hide?h.add(id):h.delete(id);
+  S.config={...S.config,hidden:[...h]};CACHE=null;if(hide&&S.sel===id)S.sel=null;render();
+  if(S.db){try{await S.db.doc("config/site").set(S.config)}catch(e){handleErr(e)}}
+}
+
+/* ---------- Map projection & basemap ---------- */
+const P2=([lng,lat])=>px(lng).toFixed(1)+","+py(lat).toFixed(1);
+const pts=a=>a.map(P2).join(" ");
+function buildBase(){
+  $("#labels").innerHTML=`<g class="lbl" data-x="${px(144.90)}" data-y="${py(-37.95)}"><text class="park-label" text-anchor="middle" style="fill:var(--water-ink);font-size:12px">Port Phillip Bay</text></g>`;
+}
+/* map layers: decode + spatial grid.
+   kinds: 0 local street, 1 pedestrian area, 2 tertiary, 3 secondary, 4 primary, 5 motorway/trunk,
+          6 park, 7 water, 8 island, 9 river, 10 stream */
+function makeLayer(list,names,GC){
+  const ROADS=[],GRID=new Map();
+  for(const a of list||[]){
+    const n=(a.length-2)/2,pt=new Float32Array(n*2);let x=0,y=0,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for(let i=0;i<n;i++){x+=a[2+2*i];y+=a[3+2*i];const X=x/10,Y=y/10;pt[2*i]=X;pt[2*i+1]=Y;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y}
+    const o={p:pt,name:a[0]>=0?names[a[0]]:"",k:a[1],x0,y0,x1,y1,sz:Math.max(x1-x0,y1-y0),stamp:0};ROADS.push(o);
+    for(let gx=Math.floor(x0/GC);gx<=Math.floor(x1/GC);gx++)for(let gy=Math.floor(y0/GC);gy<=Math.floor(y1/GC);gy++){
+      const k=gx*100000+gy;let c=GRID.get(k);if(!c)GRID.set(k,c=[]);c.push(o)}
+  }
+  return{ROADS,GRID,GC};
+}
+const NEAR=makeLayer(window.MM_STREETS&&MM_STREETS.l,window.MM_STREETS&&MM_STREETS.names,150);
+const FAR=makeLayer(window.MM_STREETS&&MM_STREETS.f,window.MM_STREETS&&MM_STREETS.names,700);
+const ROADS=NEAR.ROADS,FARU=1.25;
+const cv=$("#cv"),ctx=cv.getContext("2d");let landPath=null,CSSV={},stamp=0;const TW=new Map();
+function readVars(){const cs=getComputedStyle(document.documentElement);for(const k of ["street-ink","bg","land","water","water-ink","road","street","muted","park","park-ink","main","mway"])CSSV[k]=cs.getPropertyValue("--"+k).trim()}
+readVars();try{matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{readVars();drawBase()})}catch(e){}
+const ISPOLY=[0,1,0,0,0,0,1,1,1,0,0];
+//            kind: 0    1    2    3    4    5   (world width, min px, max px, show below u)
+const RW=[[0.42,1,12,0.9],null,[0.6,1.2,14,FARU],[0.75,1.3,15,3.2],[0.9,1.5,16,9],[1.15,1.8,18,99]];
+function drawBase(){
+  const r=rect();if(!r.width)return;const dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+  if(!landPath)landPath=new Path2D(D.land||"");
+  const u=vb.w/r.width,k=dpr/u;
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=CSSV.water;ctx.fillRect(0,0,W,H);
+  ctx.setTransform(k,0,0,k,-vb.x*k,-vb.y*k);
+  ctx.fillStyle=CSSV.land;ctx.fill(landPath);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  ctx.save();ctx.globalAlpha=u>0.45?1:0.55;ctx.lineWidth=0.7*u;ctx.strokeStyle=CSSV.road;ctx.stroke(landPath);ctx.restore();
+  if(!ROADS.length)return;
+  stamp++;const vis=[],paths=[];for(let i=0;i<11;i++)paths.push(new Path2D());
+  const show=kd=>kd===1?u<0.9:kd<6?u<RW[kd][3]:kd===10?u<0.7:true;
+  const {GRID,GC}=u>FARU&&FAR.ROADS.length?FAR:NEAR;
+  if(u>0.6){ctx.lineCap="butt";ctx.lineJoin="bevel"}
+  for(let gx=Math.floor(vb.x/GC);gx<=Math.floor((vb.x+vb.w)/GC);gx++)for(let gy=Math.floor(vb.y/GC);gy<=Math.floor((vb.y+vb.h)/GC);gy++){
+    const c=GRID.get(gx*100000+gy);if(!c)continue;
+    for(const o of c){if(o.stamp===stamp)continue;o.stamp=stamp;
+      if(!show(o.k)||(ISPOLY[o.k]&&o.sz<4*u))continue;
+      vis.push(o);const pt=o.p,t=paths[o.k];t.moveTo(pt[0],pt[1]);for(let i=2;i<pt.length;i+=2)t.lineTo(pt[i],pt[i+1]);if(ISPOLY[o.k])t.closePath()}
+  }
+  ctx.fillStyle=CSSV.park;ctx.fill(paths[6]);
+  ctx.fillStyle=CSSV.water;ctx.fill(paths[7]);
+  ctx.fillStyle=CSSV.land;ctx.fill(paths[8]);
+  ctx.strokeStyle=CSSV.water;ctx.lineWidth=Math.max(1*u,0.25);ctx.stroke(paths[10]);ctx.lineWidth=Math.max(2*u,0.9);ctx.stroke(paths[9]);
+  const wid=kd=>Math.max(RW[kd][1],Math.min(RW[kd][2],RW[kd][0]/u));
+  const col=[CSSV.street,CSSV.street,CSSV.street,CSSV.main,CSSV.main,CSSV.mway];
+  ctx.strokeStyle=CSSV.road;
+  for(const kd of [0,2,3,4,5]){const w=wid(kd);if(w>=3){ctx.lineWidth=(w+1.6)*u;ctx.stroke(paths[kd])}}
+  ctx.fillStyle=CSSV.street;ctx.fill(paths[1]);
+  for(const kd of [0,2,3,4,5]){ctx.strokeStyle=col[kd];ctx.lineWidth=wid(kd)*u;ctx.stroke(paths[kd])}
+  ctx.save();ctx.globalAlpha=.8;ctx.fillStyle=CSSV.bg;const BIG=1e5;
+  ctx.fillRect(BX0-BIG,BY0-BIG,2*BIG+BX1-BX0,BIG);ctx.fillRect(BX0-BIG,BY1,2*BIG+BX1-BX0,BIG);ctx.fillRect(BX0-BIG,BY0,BIG,BY1-BY0);ctx.fillRect(BX1,BY0,BIG,BY1-BY0);ctx.restore();
+  // names
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.textAlign="center";ctx.textBaseline="middle";
+  const placed=[],clash=(sx,sy,tw,name,gap)=>placed.some(q=>(q.n===name&&Math.hypot(q.x-sx,q.y-sy)<gap)||Math.hypot(q.x-sx,q.y-sy)<(q.w+tw)/2.6);
+  const tw_=(f,s)=>{const key=f+s;let w=TW.get(key);if(w==null){w=ctx.measureText(s).width;TW.set(key,w)}return w};
+  const LIM=[0.17,0,0.3,0.5,0.8,1.3];
+  vis.sort((a,b)=>(b.k<6?b.k:-1)-(a.k<6?a.k:-1));
+  for(const o of vis){
+    if(!o.name||placed.length>160)continue;
+    if(o.k===6||o.k===7){
+      if(u>0.5)continue;ctx.font="italic 500 10.5px Inter,system-ui,sans-serif";const tw=tw_("p",o.name);
+      if((o.x1-o.x0)/u<tw+14)continue;const sx=((o.x0+o.x1)/2-vb.x)/u,sy=((o.y0+o.y1)/2-vb.y)/u;
+      if(sx<0||sy<0||sx>r.width||sy>r.height||clash(sx,sy,tw,o.name,200))continue;
+      placed.push({n:o.name,x:sx,y:sy,w:tw});ctx.fillStyle=o.k===6?CSSV["park-ink"]:CSSV["water-ink"];ctx.fillText(o.name,sx,sy);continue;
+    }
+    if(o.k>5||o.k===1||u>LIM[o.k])continue;
+    const big=o.k>=3;ctx.font=(big?"500 10.5px":"400 10px")+" Inter,system-ui,sans-serif";
+    const tw=tw_(big?"b":"s",o.name),pt=o.p;let len=0;
+    for(let i=2;i<pt.length;i+=2)len+=Math.hypot(pt[i]-pt[i-2],pt[i+1]-pt[i-1]);
+    if(len/u<tw+24)continue;
+    // label at the middle of the part of the line that is on screen
+    let a0=-1,a1=-1,acc=0;
+    for(let i=2;i<pt.length;i+=2){const s=Math.hypot(pt[i]-pt[i-2],pt[i+1]-pt[i-1]);
+      const on=pt[i]>vb.x&&pt[i]<vb.x+vb.w&&pt[i+1]>vb.y&&pt[i+1]<vb.y+vb.h;
+      if(on){if(a0<0)a0=acc;a1=acc+s}acc+=s}
+    if(a0<0)continue;
+    let half=(a0+a1)/2,sx=0,sy=0,ang=0,ok=false;
+    for(let i=2;i<pt.length;i+=2){const dx=pt[i]-pt[i-2],dy=pt[i+1]-pt[i-1],s=Math.hypot(dx,dy);
+      if(half<=s&&s>0){const f=half/s;sx=(pt[i-2]+dx*f-vb.x)/u;sy=(pt[i-1]+dy*f-vb.y)/u;ang=Math.atan2(dy,dx);ok=true;break}half-=s}
+    if(!ok||sx<10||sy<10||sx>r.width-10||sy>r.height-10)continue;
+    if(clash(sx,sy,tw,o.name,big?340:260))continue;
+    placed.push({n:o.name,x:sx,y:sy,w:tw});
+    if(ang>Math.PI/2)ang-=Math.PI;if(ang<-Math.PI/2)ang+=Math.PI;
+    ctx.lineWidth=3;ctx.strokeStyle=col[o.k];ctx.fillStyle=CSSV["street-ink"];
+    ctx.save();ctx.translate(sx,sy);ctx.rotate(ang);ctx.strokeText(o.name,0,0);ctx.fillText(o.name,0,0);ctx.restore();
+  }
+}
+
+/* ---------- Pan / zoom ---------- */
+const svg=$("#map");
+const PAD=230,CX0=px(144.58),CX1=px(145.36),CY0=py(-37.52),CY1=py(-38.12);
+const BX0=CX0-PAD,BX1=CX1+PAD,BY0=CY0-PAD,BY1=CY1+PAD,MAXW=(BX1-BX0)*1.02;
+const HOME={cx:px(144.968),cy:py(-37.812),w:520};
+let vb={x:0,y:0,w:520,h:400};
+function rect(){return svg.getBoundingClientRect()}
+function setVB(){
+  const r=rect();if(!r.width)return;
+  vb.w=Math.max(25,Math.min(MAXW,vb.w));vb.h=vb.w*r.height/r.width;
+  if(vb.h>(BY1-BY0)*1.02){vb.h=(BY1-BY0)*1.02;vb.w=vb.h*r.width/r.height}
+  vb.x=vb.w>=BX1-BX0?(BX0+BX1-vb.w)/2:Math.max(BX0,Math.min(BX1-vb.w,vb.x));vb.y=vb.h>=BY1-BY0?(BY0+BY1-vb.h)/2:Math.max(BY0,Math.min(BY1-vb.h,vb.y));
+  svg.setAttribute("viewBox",`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);drawBase();drawDynamic();updateScale();
+}
+function updateScale(){
+  const r=rect();if(!r.width)return;const u=vb.w/r.width;
+  svg.classList.toggle("zoomed",u<0.2);
+  svg.querySelectorAll("[data-x]").forEach(g=>g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u})`));
+}
+function toWorld(cx,cy){const r=rect();return{x:vb.x+(cx-r.left)/r.width*vb.w,y:vb.y+(cy-r.top)/r.height*vb.h}}
+function zoomAt(cx,cy,f){
+  const p=toWorld(cx,cy);const nw=Math.max(25,Math.min(MAXW,vb.w*f));const k=nw/vb.w;
+  vb.x=p.x-(p.x-vb.x)*k;vb.y=p.y-(p.y-vb.y)*k;vb.w=nw;setVB();
+}
+function zoomCentre(f){const r=rect();zoomAt(r.left+r.width/2,r.top+r.height/2,f)}
+function centreOn(x,y,w){
+  const r=rect();if(w)vb.w=w;vb.h=vb.w*r.height/r.width;
+  vb.x=x-vb.w/2;vb.y=y-(isMobile()&&S.panel?vb.h*0.15:vb.h/2);setVB();
+}
+function goHome(){centreOn(HOME.cx,HOME.cy,isMobile()?320:HOME.w)}
+const ptrs=new Map();let down=null,moved=0;
+svg.addEventListener("pointerdown",e=>{
+  svg.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){down={t:e.target};moved=0}else moved+=99;
+});
+svg.addEventListener("pointermove",e=>{
+  if(!ptrs.has(e.pointerId))return;const r=rect();
+  if(ptrs.size===1){const p=ptrs.get(e.pointerId);const dx=e.clientX-p.x,dy=e.clientY-p.y;
+    vb.x-=dx*vb.w/r.width;vb.y-=dy*vb.h/r.height;moved+=Math.abs(dx)+Math.abs(dy);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});setVB();}
+  else if(ptrs.size===2){
+    const [a,b]=[...ptrs.values()];const d0=Math.hypot(a.x-b.x,a.y-b.y),m0={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const [c,d]=[...ptrs.values()];const d1=Math.hypot(c.x-d.x,c.y-d.y),m1={x:(c.x+d.x)/2,y:(c.y+d.y)/2};
+    vb.x-=(m1.x-m0.x)*vb.w/r.width;vb.y-=(m1.y-m0.y)*vb.h/r.height;
+    if(d1>0)zoomAt(m1.x,m1.y,d0/d1);else setVB();
+  }
+});
+function endPtr(e){
+  if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);
+  if(ptrs.size===0){if(down&&moved<6)tapMap(down.t,e.clientX,e.clientY);down=null}
+}
+svg.addEventListener("pointerup",endPtr);svg.addEventListener("pointercancel",endPtr);
+svg.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(e.deltaY*(e.ctrlKey?0.01:0.0018)))},{passive:false});
+new ResizeObserver(()=>setVB()).observe(svg);
+function tapMap(t,cx,cy){
+  const g=t&&t.closest&&t.closest(".pin");
+  if(g&&!S.addMode){select(g.dataset.id,false);return}
+  const cl=t&&t.closest&&t.closest(".cl");
+  if(cl&&!S.addMode){const m=CL.get(cl.dataset.k)||[];
+    if(vb.w<=32&&m.length)return openCluster(m);
+    const r=rect();return zoomAt(r.left+(+cl.dataset.x-vb.x)/vb.w*r.width,r.top+(+cl.dataset.y-vb.y)/vb.h*r.height,0.4)}
+  if(S.addMode){const w=toWorld(cx,cy);if(w.x<CX0||w.x>CX1||w.y<CY0||w.y>CY1)return toast("That spot is outside the map area.");S.draft=w;drawDraft();openAdd()}
+}
+function drawDraft(){
+  $("#draft").innerHTML=S.draft?`<g data-x="${S.draft.x}" data-y="${S.draft.y}"><circle r="12" fill="none" stroke="#a0521d" stroke-width="3" stroke-dasharray="4 3"/><circle r="4" fill="#a0521d"/></g>`:"";updateScale();
+}
+
+/* ---------- Rendering ---------- */
+let dynKey="";const CL=new Map();
+function pinSvg(c,isSel,showName){
+  const a=avgOf(c.id);
+  const mark=a!=null
+    ?`<rect x="-15" y="-9.5" width="30" height="19" rx="9.5" style="fill:${colour(a)}" stroke="#fff" stroke-width="1.5"/><text y="3.6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">${a.toFixed(1)}</text>`
+    :`<circle r="${isSel?6.5:4.5}" style="fill:var(--card);stroke:var(--accent)" stroke-width="${isSel?3.5:2.5}"/>`;
+  return`<g class="pin" data-id="${esc(c.id)}" data-x="${c.x}" data-y="${c.y}"><title>${esc(c.n)}</title>
+    <circle r="15" fill="transparent"/>
+    ${isSel?`<circle r="${a!=null?21:15}" style="fill:var(--accent)" fill-opacity=".2"/>`:""}
+    ${mark}
+    <text class="pin-name${showName?" show":""}" x="${a!=null?20:11}" y="4">${esc(c.n)}</text></g>`;
+}
+function drawDynamic(){
+  const r=rect();if(!r.width||!S.list)return;const u=vb.w/r.width;
+  const key=[vb.x.toFixed(1),vb.y.toFixed(1),vb.w.toFixed(1),r.width,r.height].join();
+  if(key===dynKey)return;dynKey=key;
+  // suburb labels, busiest first, skipping overlaps
+  const placed=[];let L="";
+  for(const s of SUBL){
+    if(placed.length>=45)break;
+    if(s.x<vb.x||s.x>vb.x+vb.w||s.y<vb.y||s.y>vb.y+vb.h)continue;
+    const w=(s.n.length*7.6+26)*u,hh=26*u;
+    if(placed.some(q=>Math.abs(q.x-s.x)<(q.w+w)/2&&Math.abs(q.y-s.y)<hh))continue;
+    placed.push({x:s.x,y:s.y,w});
+    L+=`<g data-x="${s.x}" data-y="${s.y}"><text class="sub-label" text-anchor="middle" y="-14">${esc(s.n)}</text></g>`;
+  }
+  $("#sublabels").innerHTML=L;
+  // pins, grouped into clusters by screen grid
+  const cell=68*u,m=30*u,x0=vb.x-m,x1=vb.x+vb.w+m,y0=vb.y-m,y1=vb.y+vb.h+m,groups=new Map();
+  for(const c of S.list){
+    if(c.x<x0||c.x>x1||c.y<y0||c.y>y1||c.id===S.sel)continue;
+    const k=Math.floor(c.x/cell)+"_"+Math.floor(c.y/cell);let g=groups.get(k);if(!g)groups.set(k,g=[]);g.push(c);
+  }
+  CL.clear();let single=[],H="";
+  for(const [k,g] of groups){
+    if(g.length===1){single.push(g[0]);continue}
+    CL.set(k,g);let sx=0,sy=0,best=null;
+    for(const c of g){sx+=c.x;sy+=c.y;const a=avgOf(c.id);if(a!=null&&(best==null||a>best))best=a}
+    const rad=g.length<10?11:g.length<50?13.5:g.length<200?16:19,sc=best!=null?colour(best):"var(--accent2)";
+    H+=`<g class="cl" data-k="${k}" data-x="${sx/g.length}" data-y="${sy/g.length}" style="cursor:pointer"><title>${g.length} cafes</title>
+      <circle r="${rad+4}" style="fill:${sc}" fill-opacity=".22"/>
+      <circle r="${rad}" style="fill:var(--card);stroke:${sc}" stroke-width="1.6"/>
+      <text y="3.7" text-anchor="middle" font-size="${g.length<1000?10.5:9}" font-weight="700" style="fill:var(--ink)">${g.length}</text></g>`;
+  }
+  single.sort((a,b)=>(avgOf(a.id)??0)-(avgOf(b.id)??0));
+  const sel=S.sel&&cafeById(S.sel);
+  // show a cafe's name only where it won't run over another marker or name
+  const marks=single.map(c=>[c.x,c.y]);for(const g of CL.values()){let sx=0,sy=0;for(const c of g){sx+=c.x;sy+=c.y}marks.push([sx/g.length,sy/g.length])}
+  if(sel)marks.push([sel.x,sel.y]);
+  const boxes=[],fits=c=>{
+    if(u>=0.2)return false;
+    const x0=c.x+9*u,x1=c.x+(22+c.n.length*6.6)*u,y0=c.y-8*u,y1=c.y+8*u;
+    for(const [mx,my] of marks)if((mx!==c.x||my!==c.y)&&mx>x0-12*u&&mx<x1+4*u&&my>y0-10*u&&my<y1+10*u)return false;
+    for(const b of boxes)if(x0<b[1]&&x1>b[0]&&y0<b[3]&&y1>b[2])return false;
+    boxes.push([x0,x1,y0,y1]);return true};
+  const selShow=sel?fits(sel)||true:false;
+  for(let i=single.length-1;i>=0;i--)single[i]._s=fits(single[i]);
+  H+=single.map(c=>pinSvg(c,false,c._s)).join("");
+  if(sel)H+=pinSvg(sel,true,selShow);
+  $("#pins").innerHTML=H;
+}
+function openCluster(m){
+  openModal(`<h2>${m.length} cafes here</h2><p class="sub">Pick one.</p>${m.map(c=>`<div class="lb"><button class="lbtn" data-act="go" data-id="${esc(c.id)}">${esc(c.n)}</button><span class="v">${avgOf(c.id)!=null?avgOf(c.id).toFixed(1):"–"}</span></div>`).join("")}
+  <div class="row"><button class="btn" data-act="close">Close</button></div>`,(act,b)=>{if(act==="go"){closeModal();select(b.dataset.id,false)}});
+}
+function motw(){
+  let best=null;
+  for(const c of allCafes()){const s=ST[c.id];if(!s||!s.wkN)continue;const a=s.wkSum/s.wkN;
+    if(!best||a>best.a||(a===best.a&&s.wkN>best.n))best={c,a,n:s.wkN}}
+  return best;
+}
+function renderList(list){
+  const subs=[...new Set(allCafes().map(c=>c.s))].sort();
+  const m=motw();const shown=list.slice(0,S.limit);
+  let note="";
+  if(S.mode==="connecting")note="Loading ratings…";
+  else if(S.mode==="local")note="Preview mode: ratings you add stay on this screen only. Open the page from claude.ai to save and share them.";
+  else if(S.mode==="readonly")note=S.uid?"You're viewing ratings. Ask the owner for Contributor access to add your own.":"Sign in to claude.ai to rate Magics.";
+  if(S.stale)note="Can't reach saved ratings right now. What you see may be out of date.";
+  $("#panel").innerHTML=`
+    <div class="filters">
+      <select id="fSort" aria-label="Sort"><option value="top">Highest rated</option><option value="most">Most reviewed</option><option value="new">Recently rated</option><option value="near">Nearest to map centre</option><option value="az">A to Z</option></select>
+      <select id="fMin" aria-label="Minimum rating"><option value="0">Any rating</option><option value="3">3+ stars</option><option value="4">4+ stars</option><option value="4.5">4.5+ stars</option></select>
+      <select id="fSub" aria-label="Suburb" style="grid-column:span 2"><option value="">All suburbs</option>${subs.map(s=>`<option ${s===S.suburb?"selected":""}>${esc(s)}</option>`).join("")}</select>
+      <label class="chk"><input type="checkbox" id="fFav" ${S.favOnly?"checked":""}> Favourites only</label>
+    </div>
+    ${note?`<div class="note">${esc(note)}</div>`:""}
+    ${m?`<button class="motw" data-act="sel" data-id="${esc(m.c.id)}"><div><small>Magic of the Week</small><b>${esc(m.c.n)}</b><span style="font-size:13px;opacity:.9">${esc(m.c.s)} · ${m.n} rating${m.n>1?"s":""} this week</span></div><div class="big">${m.a.toFixed(1)}</div></button>`:""}
+    <div class="count">${list.length.toLocaleString()} cafe${list.length===1?"":"s"}</div>
+    <ul class="list">${shown.map(c=>{const s=ST[c.id],a=avgOf(c.id);return`<li><div class="item" data-act="sel" data-id="${esc(c.id)}" role="button" tabindex="0">
+      <div class="badge" style="background:${colour(a)}">${a!=null?a.toFixed(1):"–"}</div>
+      <div><div class="nm">${esc(c.n)}</div><div class="sb">${esc(c.s)} · ${s&&s.n?`${s.n} rating${s.n>1?"s":""}`:"No ratings yet"}${c.by?" · community added":""}</div></div>
+      <button class="fav ${S.favs.includes(c.id)?"on":""}" data-act="fav" data-id="${esc(c.id)}" aria-label="Favourite">★</button></div></li>`}).join("")}
+    ${list.length?"":`<li class="muted">No cafes match. Try clearing filters.</li>`}</ul>
+    ${list.length>shown.length?`<button class="btn" style="width:100%;margin-top:10px" data-act="more">Show more (${list.length-shown.length} left)</button>`:""}`;
+  $("#fSort").value=S.sort;$("#fMin").value=String(S.minR);
+}
+function renderDetail(){
+  const c=cafeById(S.sel);if(!c){S.sel=null;return renderAll()}
+  const s=ST[c.id]||{n:0,crit:{},tags:{},reviews:[],photos:[],reports:{}};const a=avgOf(c.id);
+  const mine=(S.people[S.uid]?.reviews||{})[c.id];
+  const tags=Object.entries(s.tags).sort((x,y)=>y[1]-x[1]).slice(0,8);
+  const reps=Object.entries(s.reports||{});
+  const hidden=(S.config.hidden||[]).includes(c.id);
+  const maps="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.n+" "+(c.a||"")+" "+c.s+" VIC");
+  let rateBtn;
+  if(canRate())rateBtn=`<button class="btn primary" data-act="rate" data-id="${esc(c.id)}">${mine?"Update your rating":"Rate this Magic"}</button>`;
+  else rateBtn=`<button class="btn primary" disabled title="${S.mode==="connecting"?"Loading":"No permission to rate"}">Rate this Magic</button>`;
+  $("#panel").innerHTML=`
+    <button class="back" data-act="back">← All cafes</button>
+    <div class="dh"><div style="flex:1"><h2>${esc(c.n)}</h2><div class="sb">${esc(c.a?c.a+", ":"")}${esc(c.s)}${c.by?" · community added":""}</div>${c.h?`<div class="sb">Hours: ${esc(c.h)}</div>`:""}</div>
+      <button class="fav ${S.favs.includes(c.id)?"on":""}" data-act="fav" data-id="${esc(c.id)}" aria-label="Favourite" style="font-size:26px">★</button></div>
+    <div class="scorebox"><div class="badge lg" style="background:${colour(a)}">${a!=null?a.toFixed(1):"–"}</div>
+      <div>${stars(a,18)}<div class="meta">${s.n?`${s.n} Magic rating${s.n>1?"s":""}`:"No ratings yet. Be the first."}${s.price?` · Magic usually $${s.price.toFixed(2)}`:""}</div></div></div>
+    <div class="actions">${rateBtn}<a class="btn" href="${maps}" target="_blank" rel="noopener">Directions ↗</a>${c.w&&/^https?:\/\//.test(c.w)?`<a class="btn" href="${esc(c.w)}" target="_blank" rel="noopener">Website ↗</a>`:""}</div>
+    ${s.photos.length?`<h3>Photos</h3><div class="photos">${s.photos.slice(0,12).map(ph=>`<img src="${esc(photoSrc(ph))}" alt="Magic photo" data-act="photo" data-src="${esc(photoSrc(ph))}">`).join("")}</div>`:""}
+
+    <h3>Reviews</h3>
+    ${s.reviews.length?s.reviews.map(r=>`<div class="rev"><div class="top"><span class="who">${esc(who(r.uid))}</span>${stars(r.o,13)}<span class="when">${ago(r.t)}</span></div>
+      ${r.text?`<p>${esc(r.text)}</p>`:""}
+      <div class="tg">${[r.milk,r.price?"$"+r.price.toFixed(2):""].filter(Boolean).map(esc).join(" · ")}</div>
+      ${r.ph?`<img class="rp" src="${esc(photoSrc(r.ph))}" alt="Magic photo" data-act="photo" data-src="${esc(photoSrc(r.ph))}">`:""}
+      ${S.isOwner&&r.uid!==S.uid&&S.db?`<button class="linkbtn" data-act="rm" data-uid="${esc(r.uid)}" data-id="${esc(c.id)}">${S.confirmRm===r.uid+c.id?"Tap again to remove":"Remove review"}</button>`:""}</div>`).join(""):`<p class="muted">No reviews yet.</p>`}
+    <h3>Something wrong?</h3>
+    ${S.showReport?`<div class="chips">${REPORTS.map(x=>`<button class="chip" data-act="report" data-why="${x}" data-id="${esc(c.id)}" ${canRate()?"":"disabled"}>${x}</button>`).join("")}</div>`:`<button class="linkbtn" data-act="showreport">Report a problem with this listing</button>`}
+    ${S.isOwner?`<div class="note" style="margin-top:12px">Owner tools${reps.length?` · Reports: ${reps.map(([k,v])=>esc(k)+" ×"+v).join(", ")}`:""}<br><button class="btn small" style="margin-top:6px" data-act="hide" data-id="${esc(c.id)}">${hidden?"Unhide cafe":"Hide cafe from map"}</button></div>`:""}`;
+}
+function renderAll(){
+  CACHE=null;computeStats();
+  const list=filtered();S.list=list;
+  if(S.sel&&!cafeById(S.sel))S.sel=null;
+  S.sel?renderDetail():renderList(list);
+  dynKey="";drawDynamic();updateScale();
+  document.body.classList.toggle("panel-open",S.panel);
+  $("#toggle").textContent=S.panel?"Map":"List";
+  $("#addhint").hidden=!S.addMode;svg.classList.toggle("adding",S.addMode);
+}
+let raf=0;function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(renderAll)}
+
+function select(id,fromList){
+  S.sel=id;S.showReport=false;S.confirmRm=null;S.panel=true;renderAll();
+  const c=cafeById(id);if(!c)return;
+  const x=px(c.lng),y=py(c.lat);
+  const inView=x>vb.x+vb.w*0.1&&x<vb.x+vb.w*0.9&&y>vb.y+vb.h*0.1&&y<vb.y+vb.h*(isMobile()?0.3:0.9);
+  if(fromList||!inView)centreOn(x,y,Math.min(vb.w,isMobile()?220:340));
+  $("#panel").scrollTop=0;
+}
+
+/* ---------- Modals ---------- */
+let modalHandler=null;
+function openModal(html,handler){$("#sheet").innerHTML=html;$("#modal").hidden=false;modalHandler=handler||null}
+function closeModal(){$("#modal").hidden=true;modalHandler=null;if(S.addMode&&S.draft){S.draft=null;drawDraft()}}
+$("#modal").addEventListener("click",e=>{
+  if(e.target.id==="modal")return closeModal();
+  const b=e.target.closest("[data-act]");if(!b)return;
+  if(b.dataset.act==="close")return closeModal();
+  modalHandler&&modalHandler(b.dataset.act,b,e);
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("#modal").hidden)closeModal();else if(S.addMode){S.addMode=false;S.draft=null;drawDraft();render()}}});
+
+function openExplain(){
+  openModal(`<h2>What's a Magic?</h2><p class="sub">Melbourne's own coffee order.</p>
+  <p>A Magic is a <b>double ristretto</b> topped with steamed milk and served in a small cup or glass, usually around 160 to 180 ml. Ristretto shots are short and concentrated, so a Magic is stronger and sweeter than a flat white, with a thin layer of silky microfoam.</p>
+  <h3>How to rate one</h3>
+  <p style="margin:0">Give it one score out of 5. A great Magic is sweet and rich, coffee-forward, with silky milk, and ready to drink straight away. Add the milk you had, what you paid, and a photo or a few words if you like.</p>
+  <div class="row"><button class="btn primary" data-act="close">Got it</button></div>`);
+}
+function openLeader(){
+  const cafes=allCafes().filter(c=>ST[c.id]&&ST[c.id].n).sort((a,b)=>ST[b.id].avg-ST[a.id].avg||ST[b.id].n-ST[a.id].n).slice(0,10);
+  const revs=Object.entries(S.people).map(([u,p])=>[u,Object.keys(p?.reviews||{}).length]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const sub={};for(const c of allCafes()){const s=ST[c.id];if(s&&s.n){(sub[c.s]=sub[c.s]||[]).push(s.avg)}}
+  const subs=Object.entries(sub).map(([k,v])=>[k,v.reduce((a,b)=>a+b,0)/v.length,v.length]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const empty=`<p class="muted">Nothing rated yet.</p>`;
+  openModal(`<h2>Leaderboard</h2><p class="sub">Updated live as people rate.</p>
+    <h3>Top Magics</h3>${cafes.length?cafes.map((c,i)=>`<div class="lb"><span class="rk">${i+1}</span><button class="lbtn" data-act="go" data-id="${esc(c.id)}">${esc(c.n)}</button><span class="muted">${esc(c.s)}</span><span class="v">${ST[c.id].avg.toFixed(1)}</span></div>`).join(""):empty}
+    <h3>Best suburbs</h3>${subs.length?subs.map(([k,v,n],i)=>`<div class="lb"><span class="rk">${i+1}</span><span>${esc(k)}</span><span class="muted">${n} cafe${n>1?"s":""}</span><span class="v">${v.toFixed(1)}</span></div>`).join(""):empty}
+    <h3>Top reviewers</h3>${revs.length?revs.map(([u,n],i)=>`<div class="lb"><span class="rk">${i+1}</span><span>${esc(who(u))}</span><span class="v">${n} Magic${n>1?"s":""}</span></div>`).join(""):empty}
+    <div class="row"><button class="btn" data-act="close">Close</button></div>`,
+  (act,b)=>{if(act==="go"){closeModal();select(b.dataset.id,true)}});
+}
+function openMine(){
+  const my=Object.entries(S.people[S.uid]?.reviews||{}).filter(([,r])=>num(r?.o,1,5)!=null).sort((a,b)=>(b[1].t||0)-(a[1].t||0));
+  const cafes=my.map(([id])=>cafeById(id)).filter(Boolean);
+  const suburbs=new Set(cafes.map(c=>c.s));const cbd=cafes.filter(c=>c.s==="Melbourne CBD").length;
+  const avg=my.length?my.reduce((a,[,r])=>a+r.o,0)/my.length:0;
+  const B=[["First Magic","Rate your first Magic",my.length>=1],["Regular","Rate 10 cafes",my.length>=10],["Suburb hopper","Rate in 5 suburbs",suburbs.size>=5],["CBD crawler","Rate 5 CBD cafes",cbd>=5],["Half century","Rate 50 cafes",my.length>=50],["Fussy","Give a Magic 1 star",my.some(([,r])=>r.o===1)]];
+  const hidden=S.isOwner?(S.config.hidden||[]).map(id=>cafeById(id)).filter(Boolean):[];
+  openModal(`<h2>My Magics</h2><p class="sub">Your personal Magic log.</p>
+    <div class="stats3"><div><b>${my.length}</b>cafes rated</div><div><b>${suburbs.size}</b>suburbs</div><div><b>${my.length?avg.toFixed(1):"–"}</b>avg given</div></div>
+    <h3>Badges</h3><div class="badges">${B.map(([n,d,on])=>`<div class="bdg ${on?"":"off"}"><b>${on?"🏅 ":""}${n}</b>${d}</div>`).join("")}</div>
+    <h3>Favourites</h3>${S.favs.length?`<div class="chips">${S.favs.map(id=>cafeById(id)).filter(Boolean).map(c=>`<button class="chip" data-act="go" data-id="${esc(c.id)}">★ ${esc(c.n)}</button>`).join("")}</div>`:`<p class="muted">Tap ★ on a cafe to save it here.</p>`}
+    <h3>Log</h3>${my.length?my.map(([id,r])=>{const c=cafeById(id);return c?`<div class="lb"><button class="lbtn" data-act="go" data-id="${esc(id)}">${esc(c.n)}</button><span class="muted">${ago(r.t||0)}</span><span class="v">${stars(r.o,13)}</span></div>`:""}).join(""):`<p class="muted">You haven't rated any Magics yet.</p>`}
+    ${hidden.length?`<h3>Hidden cafes (owner)</h3>${hidden.map(c=>`<div class="lb"><span>${esc(c.n)}</span><button class="btn small" style="margin-left:auto" data-act="unhide" data-id="${esc(c.id)}">Unhide</button></div>`).join("")}`:""}
+    <div class="row"><button class="btn" data-act="close">Close</button></div>`,
+  (act,b)=>{if(act==="go"){closeModal();select(b.dataset.id,true)}if(act==="unhide"){setHidden(b.dataset.id,false);openMine()}});
+}
+let R=null,rateId=null;
+async function shrink(file){
+  try{const bmp=await createImageBitmap(file),s=Math.min(1,1400/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
+    c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    const b=await new Promise(r=>c.toBlob(r,"image/jpeg",0.82));return b||file}catch(e){return file}
+}
+const toDataUrl=b=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(f.result);f.onerror=rej;f.readAsDataURL(b)});
+async function dropAsset(id){if(S.assets&&id&&!id.startsWith("data:")){try{await S.assets.delete(id)}catch(e){}}}
+function openRate(id){
+  if(!canRate())return;
+  rateId=id;const ex=(S.people[S.uid]?.reviews||{})[id];
+  R={o:num(ex?.o,1,5)||0,milk:MILKS.includes(ex?.milk)?ex.milk:"Full cream",price:ex?.price??"",text:typeof ex?.text==="string"?ex.text:"",
+     ph:okPhoto(ex?.ph)?ex.ph:"",oldPh:okPhoto(ex?.ph)?ex.ph:"",file:null,preview:"",busy:false};
+  drawRate(!!ex);
+}
+function drawRate(existing){
+  const c=cafeById(rateId),canPhoto=!!S.assets||S.mode==="local",img=R.preview||(R.ph?photoSrc(R.ph):"");
+  openModal(`<h2>Rate the Magic</h2><p class="sub">${esc(c.n)}, ${esc(c.s)}</p>
+    <label class="fl">Rating</label>
+    <div class="bigstars">${[1,2,3,4,5].map(i=>`<button data-act="o" data-v="${i}" class="${R.o>=i?"on":""}" aria-label="${i} stars">★</button>`).join("")}</div>
+    <label class="fl">Milk</label>
+    <div class="chips">${MILKS.map(m=>`<button class="chip ${R.milk===m?"on":""}" data-act="milk" data-v="${m}">${m}</button>`).join("")}</div>
+    <label class="fl" for="rPrice">Price paid ($)</label>
+    <input id="rPrice" type="number" step="0.1" min="1" max="20" inputmode="decimal" placeholder="e.g. 5.50" value="${esc(R.price)}" style="max-width:140px">
+    <label class="fl" for="rText">Review <span class="muted" style="font-weight:400">(optional, <span id="rCount">${280-R.text.length}</span> left)</span></label>
+    <textarea id="rText" rows="3" maxlength="280" placeholder="How was it?">${esc(R.text)}</textarea>
+    ${canPhoto?`<label class="fl">Photo <span class="muted" style="font-weight:400">(optional)</span></label>
+      ${img?`<div class="phprev"><img src="${esc(img)}" alt="Your photo"><button class="btn small" data-act="phrm">Remove photo</button></div>`
+           :`<label class="btn phbtn">Add a photo<input id="rFile" type="file" accept="image/*" hidden></label>`}`:""}
+    <div class="row">${existing?`<button class="btn left" data-act="del">Delete my rating</button>`:""}<button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="save" ${R.busy?"disabled":""}>${R.busy?"Saving…":"Save rating"}</button></div>`,
+  async(act,b)=>{
+    const v=b.dataset.v;if(R.busy)return;
+    if(act==="o"){R.o=+v;drawRate(existing)}
+    if(act==="milk"){R.milk=v;drawRate(existing)}
+    if(act==="phrm"){if(R.preview)URL.revokeObjectURL(R.preview);R.file=null;R.preview="";R.ph="";drawRate(existing)}
+    if(act==="save"){
+      if(!R.o)return toast("Pick a star rating first.");
+      const id=rateId;let ph=R.ph,photoFailed=false;
+      if(R.file){
+        R.busy=true;drawRate(existing);
+        try{const blob=await shrink(R.file);
+          if(S.assets){const up=await S.assets.upload(blob);ph=up&&up.id?String(up.id):"";if(!okPhoto(ph)){ph="";photoFailed=true}}
+          else ph=await toDataUrl(blob);
+        }catch(e){ph=R.oldPh;photoFailed=true}
+        R.busy=false;
+      }
+      const rec={o:R.o,milk:R.milk,price:num(parseFloat(R.price),1,20),text:String(R.text).trim().slice(0,280),t:Date.now()};
+      if(ph)rec.ph=ph;
+      const old=R.oldPh;closeModal();
+      const ok=await saveMine(cur=>{cur.reviews={...(cur.reviews||{}),[id]:rec}});
+      if(ok&&old&&old!==ph)dropAsset(old);
+      if(ok)toast(photoFailed?"Rating saved, but the photo couldn't be uploaded.":"Rating saved. Thanks!");
+    }
+    if(act==="del"){const id=rateId,old=R.oldPh;closeModal();const ok=await saveMine(cur=>{if(cur.reviews)delete cur.reviews[id]});if(ok){dropAsset(old);toast("Rating deleted.")}}
+  });
+  $("#rText").addEventListener("input",e=>{R.text=e.target.value;$("#rCount").textContent=280-R.text.length});
+  $("#rPrice").addEventListener("input",e=>{R.price=e.target.value});
+  const fi=$("#rFile");if(fi)fi.addEventListener("change",e=>{
+    const f=e.target.files&&e.target.files[0];if(!f)return;
+    if(!f.type.startsWith("image/"))return toast("Choose an image file.");
+    if(f.size>20*1024*1024)return toast("That photo is too big (20 MB max).");
+    R.file=f;R.preview=URL.createObjectURL(f);drawRate(existing)});
+}
+function openAdd(){
+  const subs=SUBL.map(s=>s.n).sort();
+  openModal(`<h2>Add a missing cafe</h2><p class="sub">It'll appear on the map for everyone, marked as community added.</p>
+    <label class="fl" for="aName">Cafe name</label><input id="aName" maxlength="60" placeholder="e.g. The Corner Cup">
+    <label class="fl" for="aSub">Suburb</label><input id="aSub" maxlength="40" list="subList" placeholder="e.g. Fitzroy"><datalist id="subList">${subs.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <label class="fl" for="aAddr">Street address <span class="muted" style="font-weight:400">(optional)</span></label><input id="aAddr" maxlength="80" placeholder="e.g. 12 Smith St">
+    <div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="addsave">Add cafe</button></div>`,
+  async act=>{
+    if(act!=="addsave")return;
+    const n=$("#aName").value.trim(),s=$("#aSub").value.trim(),a=$("#aAddr").value.trim();
+    if(!n||!s)return toast("Add a name and suburb.");
+    const lng=S.draft.x/KX+LNG0,lat=LAT0-S.draft.y/KY;
+    const id="c-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    S.addMode=false;S.draft=null;drawDraft();$("#modal").hidden=true;modalHandler=null;
+    const ok=await saveMine(cur=>{cur.cafes={...(cur.cafes||{}),[id]:{n,s,a,lat:+lat.toFixed(5),lng:+lng.toFixed(5),t:Date.now()}}});
+    if(ok){toast("Cafe added.");select(id,false)}
+  });
+  setTimeout(()=>$("#aName")&&$("#aName").focus(),50);
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click",async e=>{
+  if(e.target.closest("#modal"))return;
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  if(act==="fav"){e.stopPropagation();return toggleFav(id)}
+  if(act==="sel")return select(id,true);
+  if(act==="back"){S.sel=null;return render()}
+  if(act==="more"){S.limit+=120;return render()}
+  if(act==="rate")return openRate(id);
+  if(act==="explain")return openExplain();
+  if(act==="leader")return openLeader();
+  if(act==="mine")return openMine();
+  if(act==="add"){if(!canRate())return toast(S.mode==="connecting"?"Still loading, try again in a moment.":"You need permission to add cafes.");S.addMode=true;if(isMobile())S.panel=false;return render()}
+  if(act==="addcancel"){S.addMode=false;S.draft=null;drawDraft();return render()}
+  if(act==="zin")return zoomCentre(0.7);
+  if(act==="zout")return zoomCentre(1.4);
+  if(act==="zreset")return goHome();
+  if(act==="toggle"){S.panel=!S.panel;if(S.panel)S.sel=null;return render()}
+  if(act==="photo"){const src=b.dataset.src;if(/^(\/_blob\/|data:image\/)/.test(src))openModal(`<img src="${esc(src)}" alt="Magic photo" style="width:100%;border-radius:12px;display:block"><div class="row"><button class="btn" data-act="close">Close</button></div>`);return}
+  if(act==="showreport"){S.showReport=true;return render()}
+  if(act==="report"){const why=b.dataset.why;S.showReport=false;const ok=await saveMine(cur=>{cur.reports={...(cur.reports||{}),[id]:why}});if(ok)toast("Thanks, reported.");return}
+  if(act==="hide")return setHidden(id,!(S.config.hidden||[]).includes(id));
+  if(act==="rm"){const u=b.dataset.uid;if(S.confirmRm!==u+id){S.confirmRm=u+id;return render()}S.confirmRm=null;const oldPh=S.people[u]?.reviews?.[id]?.ph;const ok=await saveOther(u,cur=>{if(cur.reviews)delete cur.reviews[id]});if(ok){if(okPhoto(oldPh))dropAsset(oldPh);toast("Review removed.")}return}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("item"))select(e.target.dataset.id,true)});
+$("#panel").addEventListener("change",e=>{
+  if(e.target.id==="fSort")S.sort=e.target.value;
+  if(e.target.id==="fMin")S.minR=+e.target.value;
+  if(e.target.id==="fSub"){S.suburb=e.target.value;const s=SUBL.find(q=>q.n===S.suburb);if(s)centreOn(s.x,s.y,Math.max(120,Math.min(900,Math.sqrt(s.area)*260)))}
+  S.limit=60;
+  if(e.target.id==="fFav")S.favOnly=e.target.checked;
+  render();
+});
+$("#q").addEventListener("input",e=>{S.q=e.target.value;S.sel=null;S.limit=60;if(isMobile()&&S.q)S.panel=true;render()});
+
+/* ---------- Boot ---------- */
+buildBase();setVB();goHome();renderAll();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{TW.clear();drawBase()});
+async function refreshNames(){
+  const ids=Object.keys(S.people).filter(id=>!(id in S.names)&&id!==S.uid);
+  if(!ids.length||!S.user||!S.user.profiles)return;
+  ids.forEach(id=>S.names[id]="");
+  try{const ps=await S.user.profiles(ids);ids.forEach(id=>S.names[id]=(ps&&ps[id]&&ps[id].name)||"");render()}catch(e){}
+}
+(async()=>{
+  const use=window.claude&&window.claude.use;
+  if(!use){S.mode="local";S.uid="local";return render()}
+  const [db,user,assets]=await Promise.all(["db","user","assets"].map(n=>window.claude.use(n).catch(()=>null)));
+  S.user=user;S.assets=assets;
+  if(!db){S.mode="local";S.uid="local";return render()}
+  S.db=db;
+  try{S.uid=user?await user.id():null}catch(e){S.uid=null}
+  try{S.isOwner=user?!!(await user.isOwner()):false}catch(e){}
+  let cw=null;try{cw=user&&user.can?await user.can("data.write"):null}catch(e){}
+  S.mode=!S.uid?"readonly":(cw===false?"readonly":"live");
+  if(S.isOwner&&S.uid)S.mode="live";
+  render();
+  const timer=setTimeout(()=>{S.stale=true;render()},10000);
+  db.collection("people").onSnapshot(snap=>{
+    const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
+    S.people=next;if(!snap.metadata.fromCache){clearTimeout(timer);S.stale=false}
+    render();refreshNames();
+  },err=>{clearTimeout(timer);S.stale=true;render()});
+  db.doc("config/site").onSnapshot(d=>{S.config=d.exists&&d.data()?{hidden:[],...d.data()}:{hidden:[]};render()},()=>{});
+  if(S.uid)db.doc("data/users/"+S.uid+"/prefs").onSnapshot(d=>{const f=d.exists&&d.data()&&d.data().favs;S.favs=Array.isArray(f)?f.filter(x=>typeof x==="string"):[];render()},()=>{});
+})();
+</script>
+</body>
+</html>
