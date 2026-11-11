@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Melbourne Magics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -67,6 +67,8 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 #mapWrap{flex:1;position:relative;min-width:0;background:var(--water)}
 #cv{position:absolute;left:-50%;top:-50%;width:200%;height:200%;transform-origin:0 0;will-change:transform}
 #mapWrap{overflow:hidden}
+#mapWrap,#mapWrap *{touch-action:none}
+html,body{touch-action:pan-x pan-y;overscroll-behavior:none}
 .grab{display:none}
 #map{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;transform-origin:0 0;will-change:transform;touch-action:none;cursor:grab;user-select:none}
 #map:active{cursor:grabbing}
@@ -535,6 +537,12 @@ function endPtr(e){
 svg.addEventListener("pointerup",endPtr);svg.addEventListener("pointercancel",endPtr);
 svg.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(e.deltaY*(e.ctrlKey?0.01:0.0018)),true)},{passive:false});
 new ResizeObserver(()=>{applySheet();commit()}).observe(wrap);
+// Keep pinch and double-tap for the map: stop the browser zooming the whole page instead.
+["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+wrap.addEventListener("touchstart",e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault()},{passive:false});
+wrap.addEventListener("touchmove",e=>{if(e.cancelable)e.preventDefault()},{passive:false});
+document.addEventListener("touchmove",e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault()},{passive:false});
+let lastTap={t:0,x:0,y:0};
 function tapMap(t,cx,cy){
   const g=t&&t.closest&&t.closest(".pin");
   if(g&&!S.addMode){select(g.dataset.id,false);return}
@@ -542,6 +550,9 @@ function tapMap(t,cx,cy){
   if(cl&&!S.addMode){const m=CL.get(cl.dataset.k)||[];
     if(vb.w<=32&&m.length)return openCluster(m);
     const r=rect();return zoomAt(r.left+(+cl.dataset.x-vb.x)/vb.w*r.width,r.top+(+cl.dataset.y-vb.y)/vb.h*r.height,0.4)}
+  if(!S.addMode&&!g&&!cl){ // double-tap empty map to zoom in
+    const now=performance.now(),dbl=now-lastTap.t<320&&Math.hypot(cx-lastTap.x,cy-lastTap.y)<30;
+    lastTap=dbl?{t:0,x:0,y:0}:{t:now,x:cx,y:cy};if(dbl)zoomAt(cx,cy,0.5);return}
   if(S.addMode){const w=toWorld(cx,cy);if(w.x<CX0||w.x>CX1||w.y<CY0||w.y>CY1)return toast("That spot is outside the map area.");S.draft=w;drawDraft();openAdd()}
 }
 function drawDraft(){
@@ -695,7 +706,7 @@ function applySheet(){
   side.dataset.s=S.sheet;if(!sd)side.style.height=sheetH(S.sheet)+"px";
   document.body.classList.toggle("sheet-up",S.sheet!=="peek");
   const c=S.sel&&cafeById(S.sel);
-  $("#grabText").textContent=S.sheet!=="peek"?"":c?c.n:S.list?`${S.list.length.toLocaleString()} cafe${S.list.length===1?"":"s"} · pull up for the list`:"";
+  $("#grabText").textContent=S.sheet!=="peek"?"":c?c.n:S.list?`${S.list.length.toLocaleString()} cafe${S.list.length===1?"":"s"} · PULL UP FOR THE LIST`:"";
 }
 function sheetStart(y){sd={y,h:side.getBoundingClientRect().height,ly:y,lt:performance.now(),v:0,moved:false}}
 function sheetMove(y){
@@ -787,9 +798,9 @@ function openMine(){
     <h3>Favourites</h3>${S.favs.length?`<div class="chips">${S.favs.map(id=>cafeById(id)).filter(Boolean).map(c=>`<button class="chip" data-act="go" data-id="${esc(c.id)}">★ ${esc(c.n)}</button>`).join("")}</div>`:`<p class="muted">Tap ★ on a cafe to save it here.</p>`}
     <h3>Log</h3>${my.length?my.map(([id,r])=>{const c=cafeById(id);return c?`<div class="lb"><button class="lbtn" data-act="go" data-id="${esc(id)}">${esc(c.n)}</button><span class="muted">${ago(r.t||0)}</span><span class="v">${stars(r.o,13)}</span></div>`:""}).join(""):`<p class="muted">You haven't rated any Magics yet.</p>`}
     ${hidden.length?`<h3>Hidden cafes (owner)</h3>${hidden.map(c=>`<div class="lb"><span>${esc(c.n)}</span><button class="btn small" style="margin-left:auto" data-act="unhide" data-id="${esc(c.id)}">Unhide</button></div>`).join("")}`:""}
-    <div class="row">${S.backend==="supabase"?(S.uid?`<button class="btn left" data-act="name">Change name</button><button class="btn" data-act="signout">Sign out</button>`:`<button class="btn left" data-act="signin2">Sign in</button>`):""}<button class="btn" data-act="close">Close</button></div>`,
+    <div class="row">${S.backend==="supabase"?(S.uid?`<button class="btn left" data-act="name">Change name</button><button class="btn" data-act="setpw">Set password</button><button class="btn" data-act="signout">Sign out</button>`:`<button class="btn left" data-act="signin2">Sign in</button>`):""}<button class="btn" data-act="close">Close</button></div>`,
   (act,b)=>{if(act==="go"){closeModal();select(b.dataset.id,true)}if(act==="unhide"){setHidden(b.dataset.id,false);openMine()}
-    if(act==="signin2")openSignin();if(act==="name")openName();if(act==="signout")S.sb.auth.signOut().catch(()=>{}).then(()=>location.reload())});
+    if(act==="signin2")openSignin();if(act==="name")openName();if(act==="setpw")openSetPw();if(act==="signout")S.sb.auth.signOut().catch(()=>{}).then(()=>location.reload())});
 }
 let R=null,rateId=null;
 async function shrink(file){
@@ -923,17 +934,41 @@ async function refreshNames(){
 }
 /* ---------- Own-website storage (Supabase), used when config.js is filled in ---------- */
 function openSignin(){
-  openModal(`<h2>Sign in</h2><p class="sub">We'll email you a sign-in link. No password needed.</p>
+  openModal(`<h2>Sign in</h2><p class="sub">Use your email and a password. You stay signed in on this device.</p>
     <label class="fl" for="sEmail">Email</label><input id="sEmail" type="email" autocomplete="email" placeholder="you@example.com">
-    <div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="send">Send link</button></div>`,
+    <label class="fl" for="sPass">Password</label><input id="sPass" type="password" autocomplete="current-password" placeholder="At least 8 characters">
+    <div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn" data-act="signup">Create account</button><button class="btn primary" data-act="login">Sign in</button></div>
+    <p class="muted" style="margin:14px 0 0;text-align:right"><button class="linkbtn" data-act="link">Forgot password? Email me a sign-in link</button></p>`,
   async act=>{
-    if(act!=="send")return;const em=$("#sEmail").value.trim();
+    if(!["login","signup","link"].includes(act))return;
+    const em=$("#sEmail").value.trim(),pw=$("#sPass").value,back=location.origin+location.pathname;
     if(!/^\S+@\S+\.\S+$/.test(em))return toast("Enter a valid email.");
-    let error=null;try{({error}=await S.sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}}))}catch(e){error=e}
-    if(error)return toast("Couldn't send the link. Wait a minute and try again.");
-    openModal(`<h2>Check your email</h2><p>A sign-in link is on its way to ${esc(em)}. Open it on this device.</p><div class="row"><button class="btn primary" data-act="close">OK</button></div>`);
+    if(act!=="link"&&pw.length<8)return toast("Password needs at least 8 characters.");
+    try{
+      if(act==="login"){
+        const {error}=await S.sb.auth.signInWithPassword({email:em,password:pw});
+        if(error)return toast(/confirm/i.test(error.message||"")?"Confirm your email first. Check your inbox for the link.":"Wrong email or password. New here? Tap Create account.");
+        return; // the page reloads signed in
+      }
+      if(act==="signup"){
+        const {data,error}=await S.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:back}});
+        if(error)return toast(/registered|exists/i.test(error.message||"")?"That email already has an account. Tap Sign in.":"Couldn't create the account. Try again in a minute.");
+        if(data&&data.session)return; // signed in straight away
+        return openModal(`<h2>Confirm your email</h2><p>We sent a one-time confirmation link to ${esc(em)}. Open it once, and from then on you sign in with just your email and password.</p><p class="muted">Already have an account? Use Sign in instead, or the email link if you never set a password.</p><div class="row"><button class="btn primary" data-act="close">OK</button></div>`);
+      }
+      const {error}=await S.sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:back}});
+      if(error)return toast("Couldn't send the link. Wait a minute and try again.");
+      openModal(`<h2>Check your email</h2><p>A sign-in link is on its way to ${esc(em)}. Open it on this device, then set a new password under My Magics.</p><div class="row"><button class="btn primary" data-act="close">OK</button></div>`);
+    }catch(e){toast("Couldn't reach the sign-in service. Check your connection.")}
   });
   setTimeout(()=>$("#sEmail")&&$("#sEmail").focus(),50);
+}
+function openSetPw(){
+  openModal(`<h2>Set a password</h2><p class="sub">Use it with your email to sign in on any device.</p>
+    <input id="nPass" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+    <div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="pwsave">Save</button></div>`,
+  async act=>{if(act!=="pwsave")return;const pw=$("#nPass").value;if(pw.length<8)return toast("Password needs at least 8 characters.");
+    try{const {error}=await S.sb.auth.updateUser({password:pw});if(error)return toast("Couldn't save the password. Try again.");closeModal();toast("Password saved.")}catch(e){toast("Couldn't save the password. Try again.")}});
 }
 function openName(){
   const cur=String(S.people[S.uid]?.name||"");
