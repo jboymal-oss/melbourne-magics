@@ -7,14 +7,28 @@ A map of Melbourne cafes where people rate each cafe's Magic (a double ristretto
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole app: layout, styles and code |
+| `config.js` | Your Supabase settings (empty = preview mode) |
 | `data.js` | 2,738 cafes and the suburb boundaries |
 | `streets.js` | Streets, main roads, parks and water for the map |
+| `supabase/setup.sql` | One-off database setup script |
 
-## Running it
+## Part 1: put it online (GitHub Pages)
 
-Open `index.html` in a browser, or host the three files on any static host (GitHub Pages works).
+1. Upload everything in this folder to a public GitHub repository.
+2. In the repository go to Settings > Pages, choose "Deploy from a branch", pick `main` and save.
+3. The site appears at `https://<your-username>.github.io/<repository-name>/`.
 
-Outside claude.ai the app runs in preview mode: the map, search and cafe pages all work, but ratings, favourites and photos stay on screen only and are not saved or shared. Saving relies on the storage that claude.ai provides to published pages. A standalone public version needs its own backend for accounts, ratings and photos.
+With `config.js` left empty the site runs in preview mode: the map, search and cafe pages work, but ratings, favourites and photos are not saved.
+
+## Part 2: make ratings save (Supabase)
+
+1. Create a project at supabase.com (Sydney region).
+2. Open SQL Editor, paste in all of `supabase/setup.sql` and click Run.
+3. Go to Authentication > URL Configuration. Set Site URL to your website address and add the same address under Redirect URLs.
+4. Click Connect at the top of the project (or go to Settings > API Keys). Copy the Project URL and the Publishable key (starts with `sb_publishable_`) into `config.js`, then upload the changed file to GitHub. Never use the secret key.
+5. Open the website, sign in with your email, then run the last line of `setup.sql` (with your email) in the SQL Editor to make yourself the admin. Admins can remove reviews and hide cafes.
+
+People sign in with a link sent to their email, so there are no passwords. Supabase's built-in email sender only allows a few emails an hour; add your own email provider under Authentication > Emails before a public launch.
 
 ## Data sources
 

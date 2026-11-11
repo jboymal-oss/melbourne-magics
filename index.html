@@ -210,6 +210,7 @@ label.fl{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
 <div id="modal" class="modal" hidden><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
 
+<script src="config.js"></script>
 <script src="data.js"></script>
 <script src="streets.js"></script>
 <script>
@@ -239,7 +240,7 @@ function stars(v,size=15){const p=Math.max(0,Math.min(100,(v||0)/5*100));return`
 function ago(t){const d=(Date.now()-t)/864e5;if(d<1)return"today";if(d<2)return"yesterday";if(d<30)return Math.floor(d)+" days ago";return new Date(t).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}
 function who(id){return id===S.uid?"You":(S.names[id]||"Someone")}
 const okPhoto=v=>typeof v==="string"&&(/^[\w.\-:~]{4,200}$/.test(v)||(S.mode==="local"&&v.startsWith("data:image/")));
-const photoSrc=v=>v.startsWith("data:image/")?v:"/_blob/"+encodeURIComponent(v);
+const photoSrc=v=>v.startsWith("data:image/")?v:S.backend==="supabase"?S.photoBase+v.split(":").map(encodeURIComponent).join("/"):"/_blob/"+encodeURIComponent(v);
 const canRate=()=>S.mode==="live"||S.mode==="local";
 
 /* ---------- Data ---------- */
@@ -305,6 +306,7 @@ function filtered(){
 let chain=Promise.resolve();
 function handleErr(e){
   const c=e&&e.code;
+  if(S.backend==="supabase")return toast(c==="invalid_argument"?"Couldn't save. Sign in again and retry.":"Couldn't save. Check your connection and try again.");
   if(c==="invalid_argument"){S.mode="readonly";render();toast("You can't save here yet. Ask the owner for Contributor access.")}
   else if(c==="quota_exceeded")toast("Storage is full. Ask the owner to tidy up old data.");
   else toast("Couldn't save. Check your connection and try again.");
@@ -573,7 +575,8 @@ function renderList(list){
   let note="";
   if(S.mode==="connecting")note="Loading ratings…";
   else if(S.mode==="local")note="Preview mode: ratings you add stay on this screen only. Open the page from claude.ai to save and share them.";
-  else if(S.mode==="readonly")note=S.uid?"You're viewing ratings. Ask the owner for Contributor access to add your own.":"Sign in to claude.ai to rate Magics.";
+  else if(S.mode==="readonly")note=S.uid?"You're viewing ratings. Ask the owner for Contributor access to add your own.":(S.backend==="supabase"?"":"Sign in to claude.ai to rate Magics.");
+  const signNote=S.backend==="supabase"&&!S.uid?`<div class="note">Sign in to rate Magics and save your favourites. <button class="btn small" data-act="signin" style="margin-left:4px">Sign in</button></div>`:"";
   if(S.stale)note="Can't reach saved ratings right now. What you see may be out of date.";
   $("#panel").innerHTML=`
     <div class="filters">
@@ -582,7 +585,7 @@ function renderList(list){
       <select id="fSub" aria-label="Suburb" style="grid-column:span 2"><option value="">All suburbs</option>${subs.map(s=>`<option ${s===S.suburb?"selected":""}>${esc(s)}</option>`).join("")}</select>
       <label class="chk"><input type="checkbox" id="fFav" ${S.favOnly?"checked":""}> Favourites only</label>
     </div>
-    ${note?`<div class="note">${esc(note)}</div>`:""}
+    ${note?`<div class="note">${esc(note)}</div>`:""}${signNote}
     ${m?`<button class="motw" data-act="sel" data-id="${esc(m.c.id)}"><div><small>Magic of the Week</small><b>${esc(m.c.n)}</b><span style="font-size:13px;opacity:.9">${esc(m.c.s)} · ${m.n} rating${m.n>1?"s":""} this week</span></div><div class="big">${m.a.toFixed(1)}</div></button>`:""}
     <div class="count">${list.length.toLocaleString()} cafe${list.length===1?"":"s"}</div>
     <ul class="list">${shown.map(c=>{const s=ST[c.id],a=avgOf(c.id);return`<li><div class="item" data-act="sel" data-id="${esc(c.id)}" role="button" tabindex="0">
@@ -603,6 +606,7 @@ function renderDetail(){
   const maps="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.n+" "+(c.a||"")+" "+c.s+" VIC");
   let rateBtn;
   if(canRate())rateBtn=`<button class="btn primary" data-act="rate" data-id="${esc(c.id)}">${mine?"Update your rating":"Rate this Magic"}</button>`;
+  else if(S.backend==="supabase"&&!S.uid)rateBtn=`<button class="btn primary" data-act="signin">Sign in to rate</button>`;
   else rateBtn=`<button class="btn primary" disabled title="${S.mode==="connecting"?"Loading":"No permission to rate"}">Rate this Magic</button>`;
   $("#panel").innerHTML=`
     <button class="back" data-act="back">← All cafes</button>
@@ -689,8 +693,9 @@ function openMine(){
     <h3>Favourites</h3>${S.favs.length?`<div class="chips">${S.favs.map(id=>cafeById(id)).filter(Boolean).map(c=>`<button class="chip" data-act="go" data-id="${esc(c.id)}">★ ${esc(c.n)}</button>`).join("")}</div>`:`<p class="muted">Tap ★ on a cafe to save it here.</p>`}
     <h3>Log</h3>${my.length?my.map(([id,r])=>{const c=cafeById(id);return c?`<div class="lb"><button class="lbtn" data-act="go" data-id="${esc(id)}">${esc(c.n)}</button><span class="muted">${ago(r.t||0)}</span><span class="v">${stars(r.o,13)}</span></div>`:""}).join(""):`<p class="muted">You haven't rated any Magics yet.</p>`}
     ${hidden.length?`<h3>Hidden cafes (owner)</h3>${hidden.map(c=>`<div class="lb"><span>${esc(c.n)}</span><button class="btn small" style="margin-left:auto" data-act="unhide" data-id="${esc(c.id)}">Unhide</button></div>`).join("")}`:""}
-    <div class="row"><button class="btn" data-act="close">Close</button></div>`,
-  (act,b)=>{if(act==="go"){closeModal();select(b.dataset.id,true)}if(act==="unhide"){setHidden(b.dataset.id,false);openMine()}});
+    <div class="row">${S.backend==="supabase"?(S.uid?`<button class="btn left" data-act="name">Change name</button><button class="btn" data-act="signout">Sign out</button>`:`<button class="btn left" data-act="signin2">Sign in</button>`):""}<button class="btn" data-act="close">Close</button></div>`,
+  (act,b)=>{if(act==="go"){closeModal();select(b.dataset.id,true)}if(act==="unhide"){setHidden(b.dataset.id,false);openMine()}
+    if(act==="signin2")openSignin();if(act==="name")openName();if(act==="signout")S.sb.auth.signOut().catch(()=>{}).then(()=>location.reload())});
 }
 let R=null,rateId=null;
 async function shrink(file){
@@ -788,13 +793,14 @@ document.addEventListener("click",async e=>{
   if(act==="explain")return openExplain();
   if(act==="leader")return openLeader();
   if(act==="mine")return openMine();
-  if(act==="add"){if(!canRate())return toast(S.mode==="connecting"?"Still loading, try again in a moment.":"You need permission to add cafes.");S.addMode=true;if(isMobile())S.panel=false;return render()}
+  if(act==="signin")return openSignin();
+  if(act==="add"){if(!canRate()&&S.backend==="supabase"&&!S.uid)return openSignin();if(!canRate())return toast(S.mode==="connecting"?"Still loading, try again in a moment.":"You need permission to add cafes.");S.addMode=true;if(isMobile())S.panel=false;return render()}
   if(act==="addcancel"){S.addMode=false;S.draft=null;drawDraft();return render()}
   if(act==="zin")return zoomCentre(0.7);
   if(act==="zout")return zoomCentre(1.4);
   if(act==="zreset")return goHome();
   if(act==="toggle"){S.panel=!S.panel;if(S.panel)S.sel=null;return render()}
-  if(act==="photo"){const src=b.dataset.src;if(/^(\/_blob\/|data:image\/)/.test(src))openModal(`<img src="${esc(src)}" alt="Magic photo" style="width:100%;border-radius:12px;display:block"><div class="row"><button class="btn" data-act="close">Close</button></div>`);return}
+  if(act==="photo"){const src=b.dataset.src;if(/^(\/_blob\/|data:image\/)/.test(src)||(S.photoBase&&src.startsWith(S.photoBase)))openModal(`<img src="${esc(src)}" alt="Magic photo" style="width:100%;border-radius:12px;display:block"><div class="row"><button class="btn" data-act="close">Close</button></div>`);return}
   if(act==="showreport"){S.showReport=true;return render()}
   if(act==="report"){const why=b.dataset.why;S.showReport=false;const ok=await saveMine(cur=>{cur.reports={...(cur.reports||{}),[id]:why}});if(ok)toast("Thanks, reported.");return}
   if(act==="hide")return setHidden(id,!(S.config.hidden||[]).includes(id));
@@ -820,10 +826,74 @@ async function refreshNames(){
   ids.forEach(id=>S.names[id]="");
   try{const ps=await S.user.profiles(ids);ids.forEach(id=>S.names[id]=(ps&&ps[id]&&ps[id].name)||"");render()}catch(e){}
 }
+/* ---------- Own-website storage (Supabase), used when config.js is filled in ---------- */
+function openSignin(){
+  openModal(`<h2>Sign in</h2><p class="sub">We'll email you a sign-in link. No password needed.</p>
+    <label class="fl" for="sEmail">Email</label><input id="sEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    <div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="send">Send link</button></div>`,
+  async act=>{
+    if(act!=="send")return;const em=$("#sEmail").value.trim();
+    if(!/^\S+@\S+\.\S+$/.test(em))return toast("Enter a valid email.");
+    let error=null;try{({error}=await S.sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}}))}catch(e){error=e}
+    if(error)return toast("Couldn't send the link. Wait a minute and try again.");
+    openModal(`<h2>Check your email</h2><p>A sign-in link is on its way to ${esc(em)}. Open it on this device.</p><div class="row"><button class="btn primary" data-act="close">OK</button></div>`);
+  });
+  setTimeout(()=>$("#sEmail")&&$("#sEmail").focus(),50);
+}
+function openName(){
+  const cur=String(S.people[S.uid]?.name||"");
+  openModal(`<h2>Your display name</h2><p class="sub">Shown next to your reviews.</p>
+    <input id="nName" maxlength="30" placeholder="e.g. Sam from Fitzroy" value="${esc(cur)}">
+    <div class="row"><button class="btn" data-act="close">Later</button><button class="btn primary" data-act="nsave">Save</button></div>`,
+  async act=>{if(act!=="nsave")return;const n=$("#nName").value.trim().slice(0,30);if(!n)return toast("Enter a name.");closeModal();
+    const ok=await saveMine(cur=>{cur.name=n});if(ok)toast("Name saved.")});
+}
+async function sbInit(){
+  const C=window.MM_CONFIG||{};
+  if(!/^https:\/\/[\w.-]+$/.test(C.supabaseUrl||"")||!C.supabaseKey)return null;
+  try{
+    if(!window.supabase)await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+    const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseKey);S.sb=sb;S.backend="supabase";
+    S.photoBase=C.supabaseUrl+"/storage/v1/object/public/photos/";
+    const ses=await sb.auth.getSession();const uid=ses&&ses.data&&ses.data.session?ses.data.session.user.id:null;
+    let admin=false;
+    if(uid){try{const r=await sb.from("admins").select("user_id").eq("user_id",uid);admin=!!(r.data&&r.data.length)}catch(e){}}
+    sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"||(ev==="SIGNED_IN"&&!uid))location.reload()});
+    const fail=error=>{throw{code:error&&(error.code==="42501"||error.status===401||error.status===403)?"invalid_argument":"unavailable"}};
+    const up=async(table,row)=>{const {error}=await sb.from(table).upsert(row);if(error)fail(error)};
+    const snap=(row)=>({id:row?row.id:"",exists:!!row,data:()=>row?row.data||{}:undefined,metadata:{fromCache:false}});
+    let peopleCb=null,peopleErr=null;
+    const loadPeople=async()=>{const {data,error}=await sb.from("people").select("id,data");
+      if(error){peopleErr&&peopleErr({code:"unavailable"});return}
+      peopleCb&&peopleCb({docs:(data||[]).map(snap),metadata:{fromCache:false}})};
+    const one=(table,id,cb)=>{sb.from(table).select("id,data").eq("id",id).then(({data})=>cb(snap(data&&data[0])),()=>{})};
+    const db={
+      doc(path){const p=path.split("/");
+        if(p[0]==="people")return{set:d=>up("people",{id:p[1],data:d,updated_at:new Date().toISOString()})};
+        if(p[0]==="config")return{set:d=>up("site",{id:"site",data:d}),onSnapshot(cb){one("site","site",cb);return()=>{}}};
+        return{set:d=>up("prefs",{id:p[2],data:d}),onSnapshot(cb){one("prefs",p[2],cb);return()=>{}}}},
+      collection(){return{onSnapshot(cb,err){peopleCb=cb;peopleErr=err;loadPeople();return()=>{}}}}
+    };
+    window.addEventListener("focus",()=>{loadPeople()});
+    const user={id:async()=>uid,isOwner:async()=>admin,can:async()=>!!uid,
+      profiles:async ids=>Object.fromEntries(ids.map(i=>[i,{name:String((S.people[i]&&S.people[i].name)||"").slice(0,30)}]))};
+    const assets=uid?{
+      async upload(blob){const path=uid+"/"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+".jpg";
+        const {error}=await sb.storage.from("photos").upload(path,blob,{contentType:"image/jpeg"});if(error)throw error;return{id:path.replace("/",":")}},
+      async delete(id){await sb.storage.from("photos").remove([id.replace(":","/")])}
+    }:null;
+    return{db,user,assets};
+  }catch(e){S.backend="";return null}
+}
+let nameAsked=false;
 (async()=>{
   const use=window.claude&&window.claude.use;
-  if(!use){S.mode="local";S.uid="local";return render()}
-  const [db,user,assets]=await Promise.all(["db","user","assets"].map(n=>window.claude.use(n).catch(()=>null)));
+  let db,user,assets;
+  if(!use){
+    const own=await sbInit();
+    if(!own){S.mode="local";S.uid="local";return render()}
+    ({db,user,assets}=own);
+  }else [db,user,assets]=await Promise.all(["db","user","assets"].map(n=>window.claude.use(n).catch(()=>null)));
   S.user=user;S.assets=assets;
   if(!db){S.mode="local";S.uid="local";return render()}
   S.db=db;
@@ -838,6 +908,7 @@ async function refreshNames(){
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
     S.people=next;if(!snap.metadata.fromCache){clearTimeout(timer);S.stale=false}
     render();refreshNames();
+    if(S.backend==="supabase"&&S.uid&&!nameAsked&&!(S.people[S.uid]&&S.people[S.uid].name)&&$("#modal").hidden){nameAsked=true;openName()}
   },err=>{clearTimeout(timer);S.stale=true;render()});
   db.doc("config/site").onSnapshot(d=>{S.config=d.exists&&d.data()?{hidden:[],...d.data()}:{hidden:[]};render()},()=>{});
   if(S.uid)db.doc("data/users/"+S.uid+"/prefs").onSnapshot(d=>{const f=d.exists&&d.data()&&d.data().favs;S.favs=Array.isArray(f)?f.filter(x=>typeof x==="string"):[];render()},()=>{});
